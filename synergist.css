@@ -1,0 +1,69 @@
+.floatingItem {
+    position: absolute;
+    background: white;
+    border-radius: 3px;
+    width: 10vw;
+    padding: 5px;
+    transition: all 0.5s ease;
+}
+
+.floatingItem h3 {}
+
+.synergist-container{
+    display:flex;
+    height:100%;
+    flex-direction: column;
+}
+
+.synergist-banner {
+    flex: 0 1 auto;
+    user-select:none;
+}
+
+.synergist-banner div.dropdown{
+    position: absolute;
+    background-color: #f9f9f9;
+    z-index: 1;
+    list-style: none;
+}
+
+.synergist-banner>h2>span{
+    padding: 1px;
+    border: 1px solid black;
+}
+
+.synergist-banner>h2>span>span{
+    padding: 1px;
+    border: 1px solid black;
+}
+
+.synergist {
+    flex: 1 1 100%;
+    position: relative;
+}
+.backwall {
+    position: absolute;
+    width:100%;
+    height:100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.leftLabelContainer,.rightLabelContainer{
+    font-size: 30px;
+    user-select:none;
+}
+
+.leftLabelContainer{
+    position:absolute;
+    left: 0px;
+    top: 50%;
+}
+
+.rightLabelContainer{
+    position:absolute;
+    right: 0px;
+    top: 50%;
+}
+.dropdown li>*{
+    width:100%;
+}
