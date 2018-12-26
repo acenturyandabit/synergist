@@ -40,15 +40,15 @@ function floatingItem(views, currentView, x, y, id) {
                     x: me.div.style.left,
                     y: me.div.style.top
                 }
-                if (me.fireDoc){
-                    let updateItm={};
-                    updateItm['viewData.'+me.currentView]=me.viewData[me.currentView];
-                    me.fireDoc.update(updateItm);
-                }
             }
-        });
+        })
     });
+    this.webUpdatePosition = function () {
+        let updateItm = {};
+        updateItm['viewData.' + me.currentView] = me.viewData[me.currentView];
+        me.fireDoc.update(updateItm);
 
+    }
     // Notify me of style changes
     this.mo.observe(this.div, {
         attributes: true,
@@ -75,9 +75,9 @@ function floatingItem(views, currentView, x, y, id) {
         this.id = currentView; //just the second argument
         this.div.dataset.id = currentView;
         //the third argument lol
-        this.currentView=x;
-        if (y){
-            this.fireDoc=y;
+        this.currentView = x;
+        if (y) {
+            this.fireDoc = y;
         }
     }
     this.arrangeElement(this.currentView);
@@ -152,7 +152,7 @@ function synergist(div) {
             this.makeNewView(i, d.views[i]);
         }
         for (i in d.items) {
-            this.makeNewItem(d.items[i], i);
+            this.makeNewItem(i, d.items[i]);
         }
         this.switchView(Object.keys(this.views)[0]);
     }
@@ -182,13 +182,13 @@ function synergist(div) {
                 doc.set({
                     name: 'Pad Name'
                 });
-                let firstView={
-                    name:"Main",
+                let firstView = {
+                    name: "Main",
                     left: "Less favourable",
                     right: "More favourable"
                 }
                 doc.collection("views").doc("main").set(firstView);
-                self.makeNewView("main",firstView);
+                self.makeNewView("main", firstView);
             }
         })
         doc.onSnapshot(shot => {
@@ -216,12 +216,13 @@ function synergist(div) {
             })
         })
         this.viewCollection = doc.collection("views");
+        this.firstRun=true;
         this.viewCollection.onSnapshot(shot => {
             shot.docChanges().forEach((c) => {
                 if (c.doc.metadata.hasPendingWrites) return;
                 switch (c.type) {
                     case "added":
-                        self.makeNewView(c.doc.id, c.doc.data(),true);
+                        self.makeNewView(c.doc.id, c.doc.data(), true);
                         break;
                     case "modified":
                         this.views[c.doc.id] = c.doc.data();
@@ -229,6 +230,10 @@ function synergist(div) {
                         break;
                 }
             })
+            if (self.firstRun){
+                self.firstRun=false;
+                self.switchView("main");
+            }
         })
         //collection for views
     }
@@ -260,7 +265,7 @@ function synergist(div) {
 
     $(this.basediv).on("mousedown", ".floatingItem", (e) => {
         if (e.which != 1) return;
-        if (e.currentTarget.classList.contains("selected"))return;
+        if (e.currentTarget.classList.contains("selected")) return;
         this.movingDiv = e.currentTarget;
         this.dragging = true;
         this.dragDX = this.movingDiv.offsetLeft - e.clientX;
@@ -281,13 +286,14 @@ function synergist(div) {
         if (this.dragging) {
             this.dragging = false;
             this.movingDiv.classList.remove("moving");
+            this.items[this.movingDiv.dataset.id].webUpdatePosition();
         }
     });
 
     $(this.basediv).on("dblclick", (e) => {
         if ($(e.target).is(".leftLabel") || $(e.target).is(".rightLabel")) return;
         new_guid = guid();
-        this.makeNewItem(new_guid,e);
+        this.makeNewItem(new_guid, e);
     })
     $(this.basediv).on("click", (e) => {
         $(".floatingItem").removeClass("selected");
@@ -295,14 +301,17 @@ function synergist(div) {
     this.makeNewItem = function (id, itm) {
         let ni;
         if (itm.viewData) {
-            if (this.firebaseEnabled){
-                ni = new floatingItem(itm, id,this.currentView,this.itemCollection.doc(id));
-            }else{
-                ni = new floatingItem(itm, id,this.currentView);
+            if (this.firebaseEnabled) {
+                ni = new floatingItem(itm, id, this.currentView, this.itemCollection.doc(id));
+            } else {
+                ni = new floatingItem(itm, id, this.currentView);
             }
         } else {
-            let e=itm;
+            let e = itm;
             ni = new floatingItem(Object.keys(this.views), this.currentView, e.offsetX, e.offsetY, id);
+            if (this.firebaseEnabled) {
+                ni.fireDoc = this.itemCollection.doc(id);
+            }
             if (this.firebaseEnabled) {
                 this.itemCollection.doc(id).set(ni.toObject());
             }
@@ -313,27 +322,37 @@ function synergist(div) {
     //----------Views----------//
     $(".viewName").on("keyup", (e) => {
         this.views[e.currentTarget.dataset.listname].name = e.currentTarget.innerText;
-        if (this.firebaseEnabled)this.viewCollection.doc(e.currentTarget.dataset.listname).update({name:e.currentTarget.innerText});
+        if (this.firebaseEnabled) this.viewCollection.doc(e.currentTarget.dataset.listname).update({
+            name: e.currentTarget.innerText
+        });
     })
 
     $(".leftLabel").on("keyup", (e) => {
         this.views[this.currentView].left = e.currentTarget.innerText;
-        if (this.firebaseEnabled)this.viewCollection.doc(this.currentView).update({left:e.currentTarget.innerText});
+        if (this.firebaseEnabled) this.viewCollection.doc(this.currentView).update({
+            left: e.currentTarget.innerText
+        });
     })
 
     $(".rightLabel").on("keyup", (e) => {
         this.views[this.currentView].right = e.currentTarget.innerText;
-        if (this.firebaseEnabled)this.viewCollection.doc(this.currentView).update({right:e.currentTarget.innerText});
+        if (this.firebaseEnabled) this.viewCollection.doc(this.currentView).update({
+            right: e.currentTarget.innerText
+        });
     })
 
-    $(".synergist-container").on("keyup",".floatingItem h3", (e)=>{
-        let id=e.currentTarget.parentElement.dataset.id;
-        if (this.firebaseEnabled)this.itemCollection.doc(id).update({title:e.currentTarget.innerText});
+    $(".synergist-container").on("keyup", ".floatingItem h3", (e) => {
+        let id = e.currentTarget.parentElement.dataset.id;
+        if (this.firebaseEnabled) this.itemCollection.doc(id).update({
+            title: e.currentTarget.innerText
+        });
     })
 
-    $(".synergist-container").on("keyup",".floatingItem p", (e)=>{
-        let id=e.currentTarget.parentElement.dataset.id;
-        if (this.firebaseEnabled)this.itemCollection.doc(id).update({description:e.currentTarget.innerText});
+    $(".synergist-container").on("keyup", ".floatingItem p", (e) => {
+        let id = e.currentTarget.parentElement.dataset.id;
+        if (this.firebaseEnabled) this.itemCollection.doc(id).update({
+            description: e.currentTarget.innerText
+        });
     })
 
     this.switchView = function (ln) {
@@ -344,10 +363,10 @@ function synergist(div) {
         for (i in this.items) {
             this.items[i].arrangeElement(ln);
         }
-        this.currentView=ln;
+        this.currentView = ln;
     }
 
-    this.makeNewView = function (id, obj,auto) {
+    this.makeNewView = function (id, obj, auto) {
         if (obj == undefined) {
             obj = {
                 name: 'New View',
@@ -356,7 +375,7 @@ function synergist(div) {
             }
             this.viewCollection.doc(id).set(obj);
         };
-        if (!auto){
+        if (!auto) {
             for (i in this.items) {
                 this.items[i].makeNewView(id);
             }
@@ -398,7 +417,7 @@ function synergist(div) {
     })
 
     $("body").on("mousedown", (e) => {
-        if (!($(e.target).is("li")||$(e.target.parentElement).is("li"))) {
+        if (!($(e.target).is("li") || $(e.target.parentElement).is("li"))) {
             $(".synergist-banner h2>span>div").hide();
         }
         if (!$(e.target).is("li")) $(".contextMenu").hide();
@@ -406,8 +425,8 @@ function synergist(div) {
 
     //----------Context menu----------//
     $("body").on("contextmenu", ".floatingItem", (e) => {
-        let cte=e.target;
-        while (!$(cte).is(".floatingItem"))cte=cte.parentElement;
+        let cte = e.target;
+        while (!$(cte).is(".floatingItem")) cte = cte.parentElement;
         this.contextedElement = cte;
         $(".contextMenu")[0].style.left = e.screenX - this.basediv.offsetLeft;
         $(".contextMenu")[0].style.top = e.screenY - this.basediv.offsetTop;
@@ -420,13 +439,17 @@ function synergist(div) {
         $('.contextMenu').hide();
     })
 
-    this.removeItem=function(id,auto){
-        $(".floatingItem[data-id='"+id+"']").remove();
+    this.removeItem = function (id, auto) {
+        $(".floatingItem[data-id='" + id + "']").remove();
         delete this.items[id];
-        if (this.firebaseEnabled && !auto){
+        if (this.firebaseEnabled && !auto) {
             this.itemCollection.doc(id).delete();
         }
     }
 
 
 }
+
+/*
+{"views":{"main":{"left":"Less favourable","name":"Main","right":"More favourable"},"1545790901615":{"name":"Views","left":"Less favourable","right":"More favourable"},"1545791235016":{"name":"Collaboration","left":"Less favourable","right":"More favourable"}},"items":[{"viewData":{"main":{"x":"651px","y":"127px"},"1545790901615":{"x":"45px","y":"540px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"How does it work?","description":"Synergist revolves around Items and Views.\n\nItems are these little white boxes. Double click anywhere in the grey region to add an item! \n\nTo edit the contents of an item, just click the thing you want to edit, and edit it :)"},{"viewData":{"main":{"x":"978px","y":"147px"},"1545790901615":{"x":"104px","y":"563px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Manipulating items","description":"To rearrange items, click and drag them around the canvas.\n\nYou can double click an item to lock it in place, to allow for easy editing.\n\nTo delete an item, right click on it and press the delete button in the popup."},{"viewData":{"main":{"x":"1218px","y":"122px"},"1545790901615":{"x":"104px","y":"582px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Capice?","description":"There's more! \n\nEach screen is a view. Views allow items to be organised in different ways. \n\nTo switch a view, go to the top left dropdown menu [Main v] and click the (v) to switch to another view."},{"viewData":{"main":{"x":"388px","y":"106px"},"1545790901615":{"x":"98px","y":"615px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Hey there!","description":"Welcome to Synergist! \n\nSynergist is a platform for organising notes, ideas or whatever you want!"},{"viewData":{"main":{"x":"0px","y":"0px"},"1545790901615":{"x":"413px","y":"102px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Views","description":"You can use different views to represent different organisations of items. You've probably met the \"Add another view\" button, which is how you add new views!"},{"viewData":{"main":{"x":"0px","y":"0px"},"1545790901615":{"x":"643px","y":"115px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Items and views","description":"Items recall their position in each view; so dragging items on one view won't affect their positions on another view. This is useful if you want to cluster items or sort them by different categories.As of right now, items are present on all views, but I'm working on changing this :3"},{"viewData":{"main":{"x":"0px","y":"0px"},"1545790901615":{"x":"862px","y":"114px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Editing views","description":"You can edit the name of a view by clicking the name on the top left and typing. The \"less favourable\" and \"more favourable\" arrows can also be edited, to create a  scale from left to right. Again, just click and type :)"},{"viewData":{"main":{"x":"0px","y":"0px"},"1545790901615":{"x":"1434px","y":"126px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Capiche?","description":"Check out the next view to continue!"},{"viewData":{"main":{"x":0,"y":0},"1545790901615":{"x":0,"y":0},"1545791235016":{"x":"393px","y":"231px"}},"title":"Collaboration","description":"All gists are stored on Firebase, so you can collaborate with your friends in real time online.To collaborate with your teammates on a gist, simply drop them the url :)To create a new gist, replace the 'Tutorial' in the URL with another "},{"viewData":{"main":{"x":0,"y":0},"1545790901615":{"x":0,"y":0},"1545791235016":{"x":"651px","y":"222px"}},"title":"Have fun!","description":":)"}],"name":"Pad Name"}
+*/
