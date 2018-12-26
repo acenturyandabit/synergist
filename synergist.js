@@ -416,7 +416,7 @@ function synergist(div) {
     })
     $(".contextMenu :contains('Delete')").on("click", (e) => {
         //delete the div and delete its corresponding item
-        removeItem(this.contextedElement.dataset.id);
+        this.removeItem(this.contextedElement.dataset.id);
         $('.contextMenu').hide();
     })
 
