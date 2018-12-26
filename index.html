@@ -1,18 +1,11 @@
 <html>
   <head>
+    <script src="https://www.gstatic.com/firebasejs/5.5.5/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.5.5/firebase-firestore.js"></script>
     <script src="jquery.min.js"></script>
     <script src="synergist.js"></script>
-    <script>
-        var s;
-      $(() => {
-        s = new synergist($("body")[0]);
-        var loc = new URLSearchParams(window.location.search);
-        if (loc.get("secret")=='cindyChristmas'){
-            s.loadFromData({"views":{"main":{"name":"Height","left":"Shorter","right":"Taller"},"1545707444800":{"name":"Recency","left":"Past","right":"Recent"}},"items":[{"viewData":{"main":{"x":"462px","y":"49px"},"1545707444800":{"x":"50px","y":"564px"}},"title":"Merry Christmas!","description":"I just pulled this together from this morning so it's not perfect :/ but i hope it'll be fun/useful nonetheless!"},{"viewData":{"main":{"x":"695px","y":"43px"},"1545707444800":{"x":"76px","y":"587px"}},"title":"How to use","description":"Double-click to add an item.You can change the title and description just by clicking and changing them. In fact, you can change anything just by clicking on it and typing!"},{"viewData":{"main":{"x":"915px","y":"36px"},"1545707444800":{"x":"9px","y":"590px"}},"title":"Moving Items","description":"You can drag items around with your mouse. Arrange your boyfriends from shortest (on the left) to tallest (on the right)!"},{"viewData":{"main":{"x":"392px","y":"394px"},"1545707444800":{"x":"901px","y":"323px"}},"title":"Yusuke","description":"Or is it sashimi?"},{"viewData":{"main":{"x":"640px","y":"390px"},"1545707444800":{"x":"132px","y":"292px"}},"title":"Oskar","description":"Cambrarian"},{"viewData":{"main":{"x":"856px","y":"388px"},"1545707444800":{"x":"358px","y":"288px"}},"title":"Wilson","description":"Lookout! its a future politician"},{"viewData":{"main":{"x":"1067px","y":"382px"},"1545707444800":{"x":"605px","y":"295px"}},"title":"Zach","description":"maybe has PTSD from burning his tongue on xiaolongbao when he was younger?"},{"viewData":{"main":{"x":"1485px","y":"383px"},"1545707444800":{"x":"1159px","y":"354px"}},"title":"Oscar","description":"Nice guy. Parents would approve"},{"viewData":{"main":{"x":"1277px","y":"387px"},"1545707444800":{"x":"1405px","y":"366px"}},"title":"Vincent","description":"Infectious ... attitude? "},{"viewData":{"main":{"x":"1156px","y":"38px"},"1545707444800":{"x":"45px","y":"600px"}},"title":"New Views","description":"Click the drop-down on the top left corner to create new views. Views allow you to arrange your (boyfriends) in different ways. Check out the views I've made earlier!"},{"viewData":{"main":{"x":"1379px","y":"45px"},"1545707444800":{"x":0,"y":0}},"title":"Saving your handiwork","description":"Press Command / Ctrl-S to save, and Ctrl-O to open."}],"name":"Cindy's Boyfriend Sorter"});
-        }
-      });
-      
-    </script>
+    <script src="fireman.js"></script>
+
     <link rel="stylesheet" type="text/css" href="synergist.css" />
     <style>
     html,body{

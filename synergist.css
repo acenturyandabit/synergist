@@ -17,7 +17,7 @@
 
 .synergist-banner {
     flex: 0 1 auto;
-    user-select:none;
+    
 }
 
 .synergist-banner div.dropdown{
@@ -50,7 +50,6 @@
 
 .leftLabelContainer,.rightLabelContainer{
     font-size: 30px;
-    user-select:none;
 }
 
 .leftLabelContainer{
@@ -64,6 +63,24 @@
     right: 0px;
     top: 50%;
 }
+.dropdown li{
+    display:block;
+}
 .dropdown li>*{
     width:100%;
+}
+
+.contextMenu{
+    list-style: none;
+    background: white;
+    box-shadow: 0px 0px 5px black;
+}
+
+.contextMenu li{
+    padding:10px;
+    display:block;
+}
+
+.contextMenu, .synergist{
+    user-select:none;
 }
