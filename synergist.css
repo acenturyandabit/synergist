@@ -84,3 +84,12 @@
 .contextMenu, .synergist{
     user-select:none;
 }
+
+.floatingItem.moving{
+    box-shadow: 5px 5px 5px black;
+    transition: none;
+}
+
+.floatingItem.selected{
+    border: 3px dotted rgb(0, 110, 255);
+}

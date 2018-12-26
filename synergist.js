@@ -188,7 +188,7 @@ function synergist(div) {
                     right: "More favourable"
                 }
                 doc.collection("views").doc("main").set(firstView);
-                self.makeNewItem("main",firstView);
+                self.makeNewView("main",firstView);
             }
         })
         doc.onSnapshot(shot => {
@@ -210,6 +210,8 @@ function synergist(div) {
                     case "modified":
                         self.items[c.doc.id].remoteUpdate(c.doc.data())
                         break;
+                    case "removed":
+                        self.removeItem(c.doc.id);
                 }
             })
         })
@@ -242,26 +244,34 @@ function synergist(div) {
 
     //----------Items----------//
     $(this.basediv).on("dblclick", ".floatingItem", (e) => {
+        $(".floatingItem").removeClass("selected");
+        e.currentTarget.classList.add("selected");
         e.stopPropagation();
         return false;
     })
 
     this.dragging = false;
 
+    $(this.basediv).on("click", ".floatingItem", (e) => {
+        e.stopPropagation();
+        //e.preventDefault();
+        //return false;
+    })
+
     $(this.basediv).on("mousedown", ".floatingItem", (e) => {
         if (e.which != 1) return;
+        if (e.currentTarget.classList.contains("selected"))return;
         this.movingDiv = e.currentTarget;
         this.dragging = true;
         this.dragDX = this.movingDiv.offsetLeft - e.clientX;
         this.dragDY = this.movingDiv.offsetTop - e.clientY;
-        this.movingDiv.style["boxShadow"] = "5px 5px 5px black";
-        this.movingDiv.style.transition = "none";
         //e.preventDefault();
         //return false;
     })
 
     $(this.basediv).on("mousemove", (e) => {
         if (this.dragging) {
+            this.movingDiv.classList.add("moving");
             this.movingDiv.style.left = e.clientX + this.dragDX;
             this.movingDiv.style.top = e.clientY + this.dragDY;
         }
@@ -270,8 +280,7 @@ function synergist(div) {
     $("body").on("mouseup mouseleave", (e) => {
         if (this.dragging) {
             this.dragging = false;
-            this.movingDiv.style.transition = "all 0.5s ease";
-            this.movingDiv.style["boxShadow"] = "none";
+            this.movingDiv.classList.remove("moving");
         }
     });
 
@@ -279,6 +288,9 @@ function synergist(div) {
         if ($(e.target).is(".leftLabel") || $(e.target).is(".rightLabel")) return;
         new_guid = guid();
         this.makeNewItem(new_guid,e);
+    })
+    $(this.basediv).on("click", (e) => {
+        $(".floatingItem").removeClass("selected");
     })
     this.makeNewItem = function (id, itm) {
         let ni;
@@ -290,7 +302,7 @@ function synergist(div) {
             }
         } else {
             let e=itm;
-            ni = new floatingItem(Object.keys(this.views), this.currentView, e.offsetX, e.offsetY, new_guid);
+            ni = new floatingItem(Object.keys(this.views), this.currentView, e.offsetX, e.offsetY, id);
             if (this.firebaseEnabled) {
                 this.itemCollection.doc(id).set(ni.toObject());
             }
@@ -386,7 +398,7 @@ function synergist(div) {
     })
 
     $("body").on("mousedown", (e) => {
-        if (!$(e.target).is("li")) {
+        if (!($(e.target).is("li")||$(e.target.parentElement).is("li"))) {
             $(".synergist-banner h2>span>div").hide();
         }
         if (!$(e.target).is("li")) $(".contextMenu").hide();
@@ -394,7 +406,9 @@ function synergist(div) {
 
     //----------Context menu----------//
     $("body").on("contextmenu", ".floatingItem", (e) => {
-        this.contextedElement = e.target;
+        let cte=e.target;
+        while (!$(cte).is(".floatingItem"))cte=cte.parentElement;
+        this.contextedElement = cte;
         $(".contextMenu")[0].style.left = e.screenX - this.basediv.offsetLeft;
         $(".contextMenu")[0].style.top = e.screenY - this.basediv.offsetTop;
         $(".contextMenu").show();
@@ -402,10 +416,17 @@ function synergist(div) {
     })
     $(".contextMenu :contains('Delete')").on("click", (e) => {
         //delete the div and delete its corresponding item
-        $(this.contextedElement).remove();
-        delete this.items[this.contextedElement.dataset.id];
+        removeItem(this.contextedElement.dataset.id);
         $('.contextMenu').hide();
     })
+
+    this.removeItem=function(id,auto){
+        $(".floatingItem[data-id='"+id+"']").remove();
+        delete this.items[id];
+        if (this.firebaseEnabled && !auto){
+            this.itemCollection.doc(id).delete();
+        }
+    }
 
 
 }
