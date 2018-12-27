@@ -17,12 +17,14 @@ var s;
 $(() => {
     var params = new URLSearchParams(window.location.search);
     s = new synergist($("body")[0]);
-    
     if (params.has("gist")) {
         gistName = params.get("gist");
-        s.registerFirebaseDoc(db.collection("synergist").doc(gistName));
-    } else {
+        s.localSavePrefix=gistName;
+        if (!params.has("offline")){
+            s.registerFirebaseDoc(db.collection("synergist").doc(gistName));
+        }else{
+            s.tryLocalLoad();
+        }
         
     }
-
 })

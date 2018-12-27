@@ -52,16 +52,30 @@
     font-size: 30px;
 }
 
-.leftLabelContainer{
+.leftLabelContainer:not(.phone){
     position:absolute;
     left: 0px;
     top: 50%;
 }
 
-.rightLabelContainer{
+.rightLabelContainer:not(.phone){
     position:absolute;
     right: 0px;
     top: 50%;
+}
+
+.leftLabelContainer.phone{
+    position:absolute;
+    left: 50%;
+    bottom: 0px;
+    transform:translateX(-50%);
+}
+
+.rightLabelContainer.phone{
+    position:absolute;
+    left: 50%;
+    top: 0px;
+    transform:translateX(-50%);
 }
 .dropdown li{
     display:block;
@@ -92,4 +106,25 @@
 
 .floatingItem.selected{
     border: 3px dotted rgb(0, 110, 255);
+}
+
+.fab{
+    z-index:10;
+    position:absolute;
+    bottom: 10vw;
+    right: 10vw;
+    background-color:rgb(0, 110, 255);
+    width:15vw;
+    height:15vw;
+    border-radius:100%;
+    background:rgb(0, 110, 255);
+    border:none;
+    outline:none;
+    color:#FFF;
+    font-size:36px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+}
+
+.phone .phoneNoShow{
+    display:none;
 }

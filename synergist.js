@@ -1,23 +1,37 @@
+function isPhone() {
+    var mobiles = [
+        "Android",
+        "iPhone",
+        "Linux armv8l",
+        "Linux armv7l",
+        "Linux aarch64"
+    ];
+    if (mobiles.includes(navigator.platform)) {
+        return true;
+    }
+    return false;
+}
+
+
 function guid() {
     let pool = "1234567890qwertyuiopasdfghjklzxcvbnm";
     tguid = "";
     for (i = 0; i < 4; i++) tguid += pool[Math.floor(Math.random() * pool.length)];
     return tguid;
 }
-
-function floatingItem(views, currentView, x, y, id) {
+//when loading from ext, x is synergist and y is firebase, id is still id.
+function floatingItem(_synergist, x, y, id) {
+    //----------Parent----------//
+    this.parent = _synergist;
+    //----------The div----------//
     this.div = document.createElement("div");
-
     this.div.classList.add("floatingItem");
-    this.arrangeElement = function (view) {
-        this.currentView = view;
-        this.div.style.left = this.viewData[view].x;
-        this.div.style.top = this.viewData[view].y;
-    }
+
     $(this.div).html(`
     <h3 contentEditable>Item name</h3>
     <p contentEditable>Item description</p>
     `)
+    //----------Loading----------//
 
     this.toObject = function () {
         o = {};
@@ -32,59 +46,12 @@ function floatingItem(views, currentView, x, y, id) {
         $(this.div).find("p").text(o.description);
     }
 
-    let me = this;
-    this.mo = new MutationObserver(function (mutations) {
-        mutations.forEach(function (mutation) {
-            if (mutation.attributeName === 'style') {
-                me.viewData[me.currentView] = {
-                    x: me.div.style.left,
-                    y: me.div.style.top
-                }
-            }
-        })
-    });
-    this.webUpdatePosition = function () {
-        let updateItm = {};
-        updateItm['viewData.' + me.currentView] = me.viewData[me.currentView];
-        me.fireDoc.update(updateItm);
-
-    }
-    // Notify me of style changes
-    this.mo.observe(this.div, {
-        attributes: true,
-        attributeFilter: ["style"]
-    });
-    if (views instanceof Array) {
-        this.viewData = {};
-        this.currentView = currentView;
-        views.forEach((v, i) => {
-            this.viewData[v] = {
-                x: 0,
-                y: 0
-            };
-        })
-        this.viewData[currentView] = {
-            x: x,
-            y: y
-        };
-        this.id = id;
-        this.div.dataset.id = id
-    } else {
-        this.fromObject(views);
-        Object.assign(this, views);
-        this.id = currentView; //just the second argument
-        this.div.dataset.id = currentView;
-        //the third argument lol
-        this.currentView = x;
-        if (y) {
-            this.fireDoc = y;
-        }
-    }
-    this.arrangeElement(this.currentView);
+    //----------Updating functions----------//
     this.makeNewView = function (name) {
         this.viewData[name] = {
-            x: 0,
-            y: 0
+            x: 0.5,
+            y: 0.5,
+            hidden: false
         };
     }
     this.remoteUpdate = function (itm) {
@@ -92,11 +59,92 @@ function floatingItem(views, currentView, x, y, id) {
         this.arrangeElement(this.currentView);
     }
 
+    this.arrangeElement = function (view) {
+        this.currentView = view;
+        if (this.viewData[view].hidden)this.div.style.display="none";
+        else this.div.style.display="block"; 
+        if (!isNaN(this.viewData[view].x) && this.viewData[view].x <= 1) {
+            if (this.parent.basediv.clientHeight > this.parent.basediv.clientWidth) {
+                this.div.style.left = Math.floor(this.viewData[view].y * this.parent.basediv.clientWidth) + "px";
+                this.div.style.top = Math.floor(this.viewData[view].x * this.parent.basediv.clientHeight) + "px";
+            } else {
+                this.div.style.left = Math.floor(this.viewData[view].x * this.parent.basediv.clientWidth) + "px";
+                this.div.style.top = Math.floor(this.viewData[view].y * this.parent.basediv.clientHeight) + "px";
+            }
+        } else { //data from older versions
+            this.div.style.left = this.viewData[view].x;
+            this.div.style.top = this.viewData[view].y;
+        }
+    }
+    //----------Mutation observation----------//
+    let me = this;
+    this.mo = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            if (mutation.attributeName === 'style') {
+                let xx = me.div.style.left.replace(/[a-z]+/, "");
+                let yy = me.div.style.top.replace(/[a-z]+/, "");
+                if (me.parent.basediv.clientHeight > me.parent.basediv.clientWidth) {
+                    me.viewData[me.currentView] = {
+                        y: xx / me.parent.basediv.clientWidth,
+                        x: yy / me.parent.basediv.clientHeight,
+                        hidden:false
+                    }
+                } else {
+                    me.viewData[me.currentView] = {
+                        x: xx / me.parent.basediv.clientWidth,
+                        y: yy / me.parent.basediv.clientHeight,
+                        hidden:false
+                    }
+                }
+
+            }
+        })
+    });
+    this.webUpdatePosition = function () {
+        let updateItm = {};
+        updateItm['viewData.' + me.currentView] = me.viewData[me.currentView];
+        me.fireDoc.update(updateItm);
+    }
+    // Notify me of style changes
+    this.mo.observe(this.div, {
+        attributes: true,
+        attributeFilter: ["style"]
+    });
+    //----------Final initialisation----------//
+    if (_synergist.viewData) {
+        this.fromObject(_synergist);
+        __synergist = x; //remap the second argument
+        this.parent = __synergist;
+        if (y) {
+            this.fireDoc = y;
+        }
+        this.id = id;
+        this.div.dataset.id = id;
+        this.currentView = __synergist.currentView;
+    } else {
+        this.viewData = {};
+        this.currentView = _synergist.currentView;
+        Object.keys(_synergist.views).forEach((v, i) => {
+            this.viewData[v] = {
+                x: 0,
+                y: 0,
+                hidden:false
+            };
+        })
+        this.viewData[this.currentView] = {
+            x: x / this.parent.basediv.clientWidth,
+            y: y / this.parent.basediv.clientHeight,
+            hidden:false
+        };
+        this.id = id;
+        this.div.dataset.id = id
+    }
 }
 
 function synergist(div) {
     //----------Initialisation----------//
     this.items = {};
+    this.localSavePrefix = "";
     this.views = {
         "main": {
             name: "Main",
@@ -117,18 +165,34 @@ function synergist(div) {
         </div>
         <div class="synergist">
         <div class="backwall">
-        <span class="leftLabelContainer"><<<span class="leftLabel" contentEditable>` + this.views.main.left + `</span></span>
-        <span class="rightLabelContainer"><span class="rightLabel" contentEditable>` + this.views.main.right + `</span>>>></span>
+        <span class="leftLabelContainer"><span class="phoneNoShow"><<</span><span class="leftLabel" contentEditable>` + this.views.main.left + `</span></span>
+        <span class="rightLabelContainer"><span class="rightLabel" contentEditable>` + this.views.main.right + `</span><span class="phoneNoShow">>>></span></span>
         </div>
         </div>
     </div>
     <div class="contextMenu" style="display:none; position:absolute;">
-        <li>Delete</li>
+        <li class="deleteButton">Delete</li>
+        <li class="hideButton">Hide from this view</li>
+        <li class="showOnlyButton">Show only in this view</li>
     </div>
     `);
 
     this.basediv = $(div).find(".synergist")[0];
     this.currentView = "main";
+    //----------Phone specific ui elements----------//
+    if (isPhone()){
+        $(".synergist").append(`
+<button class="fab">+</button>
+        `)
+        $(".leftLabelContainer,.rightLabelContainer").addClass("phone");
+    }
+
+    try{
+        window.screen.lockOrientation("portrait-primary");
+    }catch(e){
+        console.log("screen lock failed");
+    }
+
     //----------Loading----------//
 
     this.toSaveData = function () {
@@ -159,14 +223,19 @@ function synergist(div) {
 
     $("body").on("keydown", (e) => {
         if (e.ctrlKey && e.key == "s") {
-            window.localStorage.setItem("synergist_data", JSON.stringify(this.toSaveData()));
+            window.localStorage.setItem("synergist_data_" + this.localSavePrefix, JSON.stringify(this.toSaveData()));
             e.preventDefault();
         }
         if (e.ctrlKey && e.key == "o") {
-            this.loadFromData(JSON.parse(window.localStorage.getItem("synergist_data")));
+            this.tryLocalLoad();
             e.preventDefault();
         }
     })
+
+    this.tryLocalLoad = function () {
+        let itm = JSON.parse(window.localStorage.getItem("synergist_data_" + this.localSavePrefix));
+        if (itm) this.loadFromData(itm);
+    }
     //----------Web based loading----------//
     this.firebaseEnabled = false;
     this.registerFirebaseDoc = function (doc) {
@@ -216,7 +285,7 @@ function synergist(div) {
             })
         })
         this.viewCollection = doc.collection("views");
-        this.firstRun=true;
+        this.firstRun = true;
         this.viewCollection.onSnapshot(shot => {
             shot.docChanges().forEach((c) => {
                 if (c.doc.metadata.hasPendingWrites) return;
@@ -230,8 +299,8 @@ function synergist(div) {
                         break;
                 }
             })
-            if (self.firstRun){
-                self.firstRun=false;
+            if (self.firstRun) {
+                self.firstRun = false;
                 self.switchView("main");
             }
         })
@@ -286,7 +355,7 @@ function synergist(div) {
         if (this.dragging) {
             this.dragging = false;
             this.movingDiv.classList.remove("moving");
-            this.items[this.movingDiv.dataset.id].webUpdatePosition();
+            if (this.firebaseEnabled) this.items[this.movingDiv.dataset.id].webUpdatePosition();
         }
     });
 
@@ -302,13 +371,13 @@ function synergist(div) {
         let ni;
         if (itm.viewData) {
             if (this.firebaseEnabled) {
-                ni = new floatingItem(itm, id, this.currentView, this.itemCollection.doc(id));
+                ni = new floatingItem(itm, this, this.itemCollection.doc(id), id);
             } else {
-                ni = new floatingItem(itm, id, this.currentView);
+                ni = new floatingItem(itm, this, undefined, id);
             }
         } else {
             let e = itm;
-            ni = new floatingItem(Object.keys(this.views), this.currentView, e.offsetX, e.offsetY, id);
+            ni = new floatingItem(this, e.offsetX, e.offsetY, id);
             if (this.firebaseEnabled) {
                 ni.fireDoc = this.itemCollection.doc(id);
             }
@@ -318,7 +387,42 @@ function synergist(div) {
         }
         this.basediv.appendChild(ni.div);
         this.items[id] = ni;
+        ni.arrangeElement(this.currentView);
     }
+
+    //----------touch api----------//
+    $(this.basediv).on("touchstart", ".floatingItem", (e) => {
+        if (e.currentTarget.classList.contains("selected")) return;
+        this.movingDiv = e.currentTarget;
+        this.dragging = true;
+        _e=e.originalEvent.touches[0];
+        this.dragDX = this.movingDiv.offsetLeft - _e.clientX;
+        this.dragDY = this.movingDiv.offsetTop - _e.clientY;
+        //e.preventDefault();
+        //return false;
+    })
+
+    $(this.basediv).on("touchmove", (e) => {
+        if (this.dragging) {
+            _e=e.originalEvent.touches[0];
+            this.movingDiv.classList.add("moving");
+            this.movingDiv.style.left = _e.clientX + this.dragDX;
+            this.movingDiv.style.top = _e.clientY + this.dragDY;
+        }
+    });
+
+    $("body").on("touchend", (e) => {
+        if (this.dragging) {
+            this.dragging = false;
+            this.movingDiv.classList.remove("moving");
+            if (this.firebaseEnabled) this.items[this.movingDiv.dataset.id].webUpdatePosition();
+        }
+    });
+
+    $(".fab").on("click", (e) => {
+        new_guid = guid();
+        this.makeNewItem(new_guid, e);
+    })
     //----------Views----------//
     $(".viewName").on("keyup", (e) => {
         this.views[e.currentTarget.dataset.listname].name = e.currentTarget.innerText;
@@ -373,7 +477,7 @@ function synergist(div) {
                 left: "Less favourable",
                 right: "More favourable",
             }
-            this.viewCollection.doc(id).set(obj);
+            if (this.firebaseEnabled) this.viewCollection.doc(id).set(obj);
         };
         if (!auto) {
             for (i in this.items) {
@@ -446,10 +550,4 @@ function synergist(div) {
             this.itemCollection.doc(id).delete();
         }
     }
-
-
 }
-
-/*
-{"views":{"main":{"left":"Less favourable","name":"Main","right":"More favourable"},"1545790901615":{"name":"Views","left":"Less favourable","right":"More favourable"},"1545791235016":{"name":"Collaboration","left":"Less favourable","right":"More favourable"}},"items":[{"viewData":{"main":{"x":"651px","y":"127px"},"1545790901615":{"x":"45px","y":"540px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"How does it work?","description":"Synergist revolves around Items and Views.\n\nItems are these little white boxes. Double click anywhere in the grey region to add an item! \n\nTo edit the contents of an item, just click the thing you want to edit, and edit it :)"},{"viewData":{"main":{"x":"978px","y":"147px"},"1545790901615":{"x":"104px","y":"563px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Manipulating items","description":"To rearrange items, click and drag them around the canvas.\n\nYou can double click an item to lock it in place, to allow for easy editing.\n\nTo delete an item, right click on it and press the delete button in the popup."},{"viewData":{"main":{"x":"1218px","y":"122px"},"1545790901615":{"x":"104px","y":"582px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Capice?","description":"There's more! \n\nEach screen is a view. Views allow items to be organised in different ways. \n\nTo switch a view, go to the top left dropdown menu [Main v] and click the (v) to switch to another view."},{"viewData":{"main":{"x":"388px","y":"106px"},"1545790901615":{"x":"98px","y":"615px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Hey there!","description":"Welcome to Synergist! \n\nSynergist is a platform for organising notes, ideas or whatever you want!"},{"viewData":{"main":{"x":"0px","y":"0px"},"1545790901615":{"x":"413px","y":"102px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Views","description":"You can use different views to represent different organisations of items. You've probably met the \"Add another view\" button, which is how you add new views!"},{"viewData":{"main":{"x":"0px","y":"0px"},"1545790901615":{"x":"643px","y":"115px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Items and views","description":"Items recall their position in each view; so dragging items on one view won't affect their positions on another view. This is useful if you want to cluster items or sort them by different categories.As of right now, items are present on all views, but I'm working on changing this :3"},{"viewData":{"main":{"x":"0px","y":"0px"},"1545790901615":{"x":"862px","y":"114px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Editing views","description":"You can edit the name of a view by clicking the name on the top left and typing. The \"less favourable\" and \"more favourable\" arrows can also be edited, to create a  scale from left to right. Again, just click and type :)"},{"viewData":{"main":{"x":"0px","y":"0px"},"1545790901615":{"x":"1434px","y":"126px"},"1545791235016":{"x":"0px","y":"0px"}},"title":"Capiche?","description":"Check out the next view to continue!"},{"viewData":{"main":{"x":0,"y":0},"1545790901615":{"x":0,"y":0},"1545791235016":{"x":"393px","y":"231px"}},"title":"Collaboration","description":"All gists are stored on Firebase, so you can collaborate with your friends in real time online.To collaborate with your teammates on a gist, simply drop them the url :)To create a new gist, replace the 'Tutorial' in the URL with another "},{"viewData":{"main":{"x":0,"y":0},"1545790901615":{"x":0,"y":0},"1545791235016":{"x":"651px","y":"222px"}},"title":"Have fun!","description":":)"}],"name":"Pad Name"}
-*/
