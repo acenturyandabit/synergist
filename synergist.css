@@ -5,8 +5,8 @@
 /*-------FloatingItem--------*/
 
 .floatingItem h3 img{
-    height:1em;
     display:none;
+    height:1em;
 }
 
 .floatingItem:hover h3 img,.floatingItem:focus h3 img{
@@ -72,6 +72,13 @@
 .synergist-banner>h2>span>span{
     padding: 1px;
     border: 1px solid black;
+}
+
+.synergist-banner>h2 img{
+    padding: 2px;
+    margin-bottom: -0.3em;
+    border: 1px solid black;
+    height: 1em;
 }
 
 .synergist {

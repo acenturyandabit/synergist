@@ -28,7 +28,7 @@ function floatingItem(_synergist, x, y, id) {
     this.div.classList.add("floatingItem");
 
     $(this.div).html(`
-    <h3><span contentEditable>Item name</span><img src="resources/gear.png"></h3>
+    <h3><span contentEditable>Item name</span><img class="gears" src="resources/gear.png"></h3>
     <p contentEditable>Item description</p>
     `)
     //----------Loading----------//
@@ -38,12 +38,18 @@ function floatingItem(_synergist, x, y, id) {
         o.viewData = this.viewData;
         o.title = $(this.div).find("h3>span").text();
         o.description = $(this.div).find("p").text();
-        o.color = this.div.style.background;
+        o.forecolor = this.div.style.color;
+        o.backcolor = this.div.style.background;
         return o;
     }
     this.fromObject = function (o) {
         this.viewData = o.viewData;
-        this.div.style.background = o.color;
+        if (o.backcolor){
+            this.div.style.background = o.backcolor;
+            this.div.style.color = o.forecolor;
+        }else{
+            this.div.style.background=o.color;
+        }
         $(this.div).find("h3>span").text(o.title);
         $(this.div).find("p").text(o.description);
     }
@@ -119,7 +125,8 @@ function floatingItem(_synergist, x, y, id) {
     this.webUpdateColor = function () {
         if (me.fireDoc) {
             let updateItm = {};
-            updateItm['color'] = me.div.style.background;
+            updateItm['backcolor'] = me.div.style.background;
+            updateItm['forecolor'] = me.div.style.color;
             me.fireDoc.update(updateItm);
         }
     }
@@ -194,10 +201,8 @@ function synergist(div) {
     <div class="synergist-container">
         <div class="synergist-banner">
             <h1 contentEditable>Pad name</h1>
-            <h2>View: <span><span contenteditable class="viewName" data-listname='main'>Main</span><span>v</span>
+            <h2>View: <span><span contenteditable class="viewName" data-listname='main'>Main</span><span>v</span><img class="gears" src="resources/gear.png">
             <div class="dropdown" style="display:none">
-                <li data-listname="Main" ><span>Main</span></li>
-                <li data-listname="new" ><em>Add another view</em></li>
             </div>
             </span></h2>
         </div>
@@ -215,7 +220,8 @@ function synergist(div) {
         <li class="showOnlyButton">Show only in this view</li>
     </div>
     <div class="floatingSetupMenu" style="display:none; position:absolute;">
-        <span>Color:<input class="jscolor" onchange="s.colorUpdateReceived(this.jscolor)" value="ffffff"></span>
+        <span>Background:<input class="jscolor" onchange="s.backColorUpdateReceived(this.jscolor)" value="ffffff"></span>
+        <span>Text:<input class="jscolor" onchange="s.foreColorUpdateReceived(this.jscolor)" value="ffffff"></span>
     </div>
     `);
     window.jscolor.installByClassName("jscolor");
@@ -636,8 +642,12 @@ function synergist(div) {
         e.stopPropagation();
     })
 
-    this.colorUpdateReceived = function (jscolor) {
+    this.backColorUpdateReceived = function (jscolor) {
         this.floatingSetupParent.style.background = "#" + jscolor;
+        this.items[this.floatingSetupParent.dataset.id].webUpdateColor();
+    }
+    this.foreColorUpdateReceived = function (jscolor) {
+        this.floatingSetupParent.style.color = "#" + jscolor;
         this.items[this.floatingSetupParent.dataset.id].webUpdateColor();
     }
 }
