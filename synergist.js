@@ -28,7 +28,7 @@ function floatingItem(_synergist, x, y, id) {
     this.div.classList.add("floatingItem");
 
     $(this.div).html(`
-    <h3 contentEditable>Item name</h3>
+    <h3><span contentEditable>Item name</span><img src="resources/gear.png"></h3>
     <p contentEditable>Item description</p>
     `)
     //----------Loading----------//
@@ -36,24 +36,33 @@ function floatingItem(_synergist, x, y, id) {
     this.toObject = function () {
         o = {};
         o.viewData = this.viewData;
-        o.title = $(this.div).find("h3").text();
+        o.title = $(this.div).find("h3>span").text();
         o.description = $(this.div).find("p").text();
+        o.color = this.div.style.background;
         return o;
     }
     this.fromObject = function (o) {
         this.viewData = o.viewData;
-        $(this.div).find("h3").text(o.title);
+        this.div.style.background = o.color;
+        $(this.div).find("h3>span").text(o.title);
         $(this.div).find("p").text(o.description);
     }
 
     //----------Updating functions----------//
     this.makeNewView = function (name) {
         this.viewData[name] = {
-            x: 0.5,
-            y: 0.5,
+            x: 0.4,
+            y: 0.4,
             hidden: false
         };
     }
+
+    this.assertView=function(name){
+        if (this.viewData[name]==undefined || this.viewData[name].x==undefined || this.viewData[name].y==undefined){
+            this.makeNewView(name);
+        }
+    }
+
     this.remoteUpdate = function (itm) {
         this.fromObject(itm);
         this.arrangeElement(this.currentView);
@@ -61,8 +70,8 @@ function floatingItem(_synergist, x, y, id) {
 
     this.arrangeElement = function (view) {
         this.currentView = view;
-        if (this.viewData[view].hidden)this.div.style.display="none";
-        else this.div.style.display="block"; 
+        if (this.viewData[view].hidden) $(this.parent.basediv).find(".bottomDrawer").append(this.div);
+        else $(this.parent.basediv).append(this.div);
         if (!isNaN(this.viewData[view].x) && this.viewData[view].x <= 1) {
             if (this.parent.basediv.clientHeight > this.parent.basediv.clientWidth) {
                 this.div.style.left = Math.floor(this.viewData[view].y * this.parent.basediv.clientWidth) + "px";
@@ -84,26 +93,35 @@ function floatingItem(_synergist, x, y, id) {
                 let xx = me.div.style.left.replace(/[a-z]+/, "");
                 let yy = me.div.style.top.replace(/[a-z]+/, "");
                 if (me.parent.basediv.clientHeight > me.parent.basediv.clientWidth) {
-                    me.viewData[me.currentView] = {
-                        y: xx / me.parent.basediv.clientWidth,
-                        x: yy / me.parent.basediv.clientHeight,
-                        hidden:false
-                    }
+                    me.viewData[me.currentView].y= xx / me.parent.basediv.clientWidth;
+                    me.viewData[me.currentView].x= yy / me.parent.basediv.clientHeight;
                 } else {
-                    me.viewData[me.currentView] = {
-                        x: xx / me.parent.basediv.clientWidth,
-                        y: yy / me.parent.basediv.clientHeight,
-                        hidden:false
-                    }
+                    me.viewData[me.currentView].x= xx / me.parent.basediv.clientWidth;
+                    me.viewData[me.currentView].y= yy / me.parent.basediv.clientHeight;
                 }
 
             }
         })
     });
+
+    this.unhide = function () {
+        this.viewData[this.parent.currentView].hidden = false;
+    }
+
     this.webUpdatePosition = function () {
-        let updateItm = {};
-        updateItm['viewData.' + me.currentView] = me.viewData[me.currentView];
-        me.fireDoc.update(updateItm);
+        if (me.fireDoc) {
+            let updateItm = {};
+            updateItm['viewData.' + me.currentView] = me.viewData[me.currentView];
+            me.fireDoc.update(updateItm);
+        }
+    }
+
+    this.webUpdateColor = function () {
+        if (me.fireDoc) {
+            let updateItm = {};
+            updateItm['color'] = me.div.style.background;
+            me.fireDoc.update(updateItm);
+        }
     }
     // Notify me of style changes
     this.mo.observe(this.div, {
@@ -126,18 +144,38 @@ function floatingItem(_synergist, x, y, id) {
         this.currentView = _synergist.currentView;
         Object.keys(_synergist.views).forEach((v, i) => {
             this.viewData[v] = {
-                x: 0,
-                y: 0,
-                hidden:false
+                x: 0.4,
+                y: 0.4,
+                hidden: false
             };
         })
         this.viewData[this.currentView] = {
             x: x / this.parent.basediv.clientWidth,
             y: y / this.parent.basediv.clientHeight,
-            hidden:false
+            hidden: false
         };
         this.id = id;
         this.div.dataset.id = id
+    }
+    //----------UI shnigs----------//
+    this.hide = function (listName) {
+        if (!listName) {
+            //hide from all but this
+            for (l in this.viewData) {
+                if (l != this.parent.currentView) {
+                    this.viewData[l].hidden = true;
+                }
+            }
+        } else {
+            this.viewData[listName].hidden = true;
+            if (listName == this.parent.currentView) $(this.parent.basediv).find(".bottomDrawer").append(this.div);
+        }
+        if (this.fireDoc) {
+            //update all view data to reflect hidden
+            let updateItm = {};
+            updateItm['viewData'] = me.viewData;
+            me.fireDoc.update(updateItm);
+        }
     }
 }
 
@@ -168,6 +206,7 @@ function synergist(div) {
         <span class="leftLabelContainer"><span class="phoneNoShow"><<</span><span class="leftLabel" contentEditable>` + this.views.main.left + `</span></span>
         <span class="rightLabelContainer"><span class="rightLabel" contentEditable>` + this.views.main.right + `</span><span class="phoneNoShow">>>></span></span>
         </div>
+        <div class="bottomDrawer specialScroll"></div>
         </div>
     </div>
     <div class="contextMenu" style="display:none; position:absolute;">
@@ -175,21 +214,24 @@ function synergist(div) {
         <li class="hideButton">Hide from this view</li>
         <li class="showOnlyButton">Show only in this view</li>
     </div>
+    <div class="floatingSetupMenu" style="display:none; position:absolute;">
+        <span>Color:<input class="jscolor" onchange="s.colorUpdateReceived(this.jscolor)" value="ffffff"></span>
+    </div>
     `);
-
+    window.jscolor.installByClassName("jscolor");
     this.basediv = $(div).find(".synergist")[0];
     this.currentView = "main";
     //----------Phone specific ui elements----------//
-    if (isPhone()){
+    if (isPhone()) {
         $(".synergist").append(`
 <button class="fab">+</button>
         `)
         $(".leftLabelContainer,.rightLabelContainer").addClass("phone");
     }
 
-    try{
+    try {
         window.screen.lockOrientation("portrait-primary");
-    }catch(e){
+    } catch (e) {
         console.log("screen lock failed");
     }
 
@@ -337,17 +379,26 @@ function synergist(div) {
         if (e.currentTarget.classList.contains("selected")) return;
         this.movingDiv = e.currentTarget;
         this.dragging = true;
-        this.dragDX = this.movingDiv.offsetLeft - e.clientX;
-        this.dragDY = this.movingDiv.offsetTop - e.clientY;
+        this.dragDX = e.pageX - $(e.currentTarget).offset().left;
+        this.dragDY = e.pageY - $(e.currentTarget).offset().top;
         //e.preventDefault();
         //return false;
     })
-
     $(this.basediv).on("mousemove", (e) => {
         if (this.dragging) {
+            if ($(this.movingDiv.parentElement).is(".bottomDrawer")) {
+                $(this.basediv).append(this.movingDiv);
+                //this.dragDX = this.movingDiv.offsetLeft - e.clientX;
+                //this.dragDY = this.movingDiv.offsetTop - e.clientY;
+                this.items[this.movingDiv.dataset.id].unhide();
+            }
             this.movingDiv.classList.add("moving");
-            this.movingDiv.style.left = e.clientX + this.dragDX;
-            this.movingDiv.style.top = e.clientY + this.dragDY;
+            this.movingDiv.style.left = e.clientX - this.basediv.offsetLeft - this.dragDX;
+            this.movingDiv.style.top = e.clientY - this.basediv.offsetTop - this.dragDY;
+            //handle moving into the bottomdrawer
+            let elements=document.elementsFromPoint(e.clientX,e.clientY);
+            if ($(elements).filter(".bottomDrawer").length)$(".bottomDrawer")[0].style.background="pink";
+            else $(".bottomDrawer")[0].style.background="lightgray";
         }
     });
 
@@ -355,7 +406,10 @@ function synergist(div) {
         if (this.dragging) {
             this.dragging = false;
             this.movingDiv.classList.remove("moving");
-            if (this.firebaseEnabled) this.items[this.movingDiv.dataset.id].webUpdatePosition();
+            let elements=document.elementsFromPoint(e.clientX,e.clientY);
+            if ($(elements).filter(".bottomDrawer").length)this.items[this.movingDiv.dataset.id].hide(this.currentView);
+            else if (this.firebaseEnabled) this.items[this.movingDiv.dataset.id].webUpdatePosition();
+            $(".bottomDrawer")[0].style.background="lightgray";
         }
     });
 
@@ -385,7 +439,6 @@ function synergist(div) {
                 this.itemCollection.doc(id).set(ni.toObject());
             }
         }
-        this.basediv.appendChild(ni.div);
         this.items[id] = ni;
         ni.arrangeElement(this.currentView);
     }
@@ -395,7 +448,7 @@ function synergist(div) {
         if (e.currentTarget.classList.contains("selected")) return;
         this.movingDiv = e.currentTarget;
         this.dragging = true;
-        _e=e.originalEvent.touches[0];
+        _e = e.originalEvent.touches[0];
         this.dragDX = this.movingDiv.offsetLeft - _e.clientX;
         this.dragDY = this.movingDiv.offsetTop - _e.clientY;
         //e.preventDefault();
@@ -404,7 +457,7 @@ function synergist(div) {
 
     $(this.basediv).on("touchmove", (e) => {
         if (this.dragging) {
-            _e=e.originalEvent.touches[0];
+            _e = e.originalEvent.touches[0];
             this.movingDiv.classList.add("moving");
             this.movingDiv.style.left = _e.clientX + this.dragDX;
             this.movingDiv.style.top = _e.clientY + this.dragDY;
@@ -445,8 +498,8 @@ function synergist(div) {
         });
     })
 
-    $(".synergist-container").on("keyup", ".floatingItem h3", (e) => {
-        let id = e.currentTarget.parentElement.dataset.id;
+    $(".synergist-container").on("keyup", ".floatingItem h3>span", (e) => {
+        let id = e.currentTarget.parentElement.parentElement.dataset.id;
         if (this.firebaseEnabled) this.itemCollection.doc(id).update({
             title: e.currentTarget.innerText
         });
@@ -458,6 +511,14 @@ function synergist(div) {
             description: e.currentTarget.innerText
         });
     })
+
+    this.removeItem = function (id, auto) {
+        $(".floatingItem[data-id='" + id + "']").remove();
+        delete this.items[id];
+        if (this.firebaseEnabled && !auto) {
+            this.itemCollection.doc(id).delete();
+        }
+    }
 
     this.switchView = function (ln) {
         $(".viewName").text(this.views[ln].name);
@@ -482,6 +543,10 @@ function synergist(div) {
         if (!auto) {
             for (i in this.items) {
                 this.items[i].makeNewView(id);
+            }
+        }else{
+            for (i in this.items) {
+                this.items[i].assertView(id);
             }
         }
         this.views[id] = obj;
@@ -516,16 +581,23 @@ function synergist(div) {
 
     //----------Misc UI shenanigans----------//
 
-    $("body").on("keydown", "h1,h2,h3", (e) => {
+    $("body").on("keydown", "h1,h1 *,h2,h2 *,h3,h3 *", (e) => {
         if (e.target.contentEditable && e.key == "Enter") e.preventDefault();
     })
 
-    $("body").on("mousedown", (e) => {
+    $(this.basediv).on("mousedown", (e) => {
         if (!($(e.target).is("li") || $(e.target.parentElement).is("li"))) {
             $(".synergist-banner h2>span>div").hide();
         }
         if (!$(e.target).is("li")) $(".contextMenu").hide();
+        if (!$(e.target).is(".floatingSetupMenu *")) $(".floatingSetupMenu").hide();
     });
+    $('.specialScroll').bind('mousewheel', function (e) {
+        if (e.target!=e.currentTarget) return;
+		var delta = e.originalEvent.deltaY;
+		if (delta==0 || delta==-0)delta=e.originalEvent.deltaX;
+		e.currentTarget.scrollLeft+=delta/5;
+	});
 
     //----------Context menu----------//
     $("body").on("contextmenu", ".floatingItem", (e) => {
@@ -537,17 +609,35 @@ function synergist(div) {
         $(".contextMenu").show();
         e.preventDefault();
     })
-    $(".contextMenu :contains('Delete')").on("click", (e) => {
+
+    $(".contextMenu .deleteButton").on("click", (e) => {
         //delete the div and delete its corresponding item
         this.removeItem(this.contextedElement.dataset.id);
         $('.contextMenu').hide();
     })
 
-    this.removeItem = function (id, auto) {
-        $(".floatingItem[data-id='" + id + "']").remove();
-        delete this.items[id];
-        if (this.firebaseEnabled && !auto) {
-            this.itemCollection.doc(id).delete();
-        }
+    $(".contextMenu .hideButton").on("click", (e) => {
+        //delete the div and delete its corresponding item
+        this.items[this.contextedElement.dataset.id].hide(this.currentView);
+        $('.contextMenu').hide();
+    })
+
+    $(".contextMenu .showOnlyButton").on("click", (e) => {
+        //delete the div and delete its corresponding item
+        this.items[this.contextedElement.dataset.id].hide();
+        $('.contextMenu').hide();
+    })
+    //----------floating helper menu----------//
+    $(this.basediv).on("click", ".floatingItem h3 img", (e) => {
+        this.floatingSetupParent = e.currentTarget.parentElement.parentElement;
+        $(".floatingSetupMenu").show();
+        $(".floatingSetupMenu")[0].style.left = this.floatingSetupParent.offsetLeft - this.floatingSetupParent.parentElement.offsetLeft;
+        $(".floatingSetupMenu")[0].style.top = this.floatingSetupParent.offsetTop + this.floatingSetupParent.parentElement.offsetTop + this.floatingSetupParent.offsetHeight + 10;
+        e.stopPropagation();
+    })
+
+    this.colorUpdateReceived = function (jscolor) {
+        this.floatingSetupParent.style.background = "#" + jscolor;
+        this.items[this.floatingSetupParent.dataset.id].webUpdateColor();
     }
 }

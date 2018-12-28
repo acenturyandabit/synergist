@@ -1,20 +1,57 @@
-.floatingItem {
-    position: absolute;
-    background: white;
-    border-radius: 3px;
-    width: 10vw;
-    padding: 5px;
-    transition: all 0.5s ease;
+.floatingItem, .floatingSetupMenu{
+    border-radius: 8px;
 }
 
-.floatingItem h3 {}
+/*-------FloatingItem--------*/
 
+.floatingItem h3 img{
+    height:1em;
+    display:none;
+}
+
+.floatingItem:hover h3 img,.floatingItem:focus h3 img{
+    display:inline-block;
+    float:right;
+}
+.floatingItem{
+    background: white;
+    width: 10vw;
+    padding: 5px;
+    transition: left 0.5s ease,top 0.5s ease;
+}
+.synergist>.floatingItem {
+    position: absolute;
+}
+/*------------Bottom drawer related----------*/
+.bottomDrawer>.floatingItem{
+    flex:0 0 10vw;
+    text-align: left;
+    margin: 10px;
+    overflow: auto;
+}
+
+.bottomDrawer{
+    display: flex;
+    text-align: center;
+    overflow-x: auto;
+    position: absolute;
+    font-size: 1em;
+    bottom: calc(-20% + 1em);
+    height: 20%;
+    padding: 10px;
+    background: lightgray;
+    width: 100%;
+    transition:0.3s;
+}
+.bottomDrawer:hover{
+    bottom:0;
+}
 .synergist-container{
     display:flex;
     height:100%;
     flex-direction: column;
 }
-
+/*---------------------Banner----------------*/
 .synergist-banner {
     flex: 0 1 auto;
     
@@ -83,7 +120,7 @@
 .dropdown li>*{
     width:100%;
 }
-
+/*------------Context menu----------*/
 .contextMenu{
     list-style: none;
     background: white;
@@ -97,6 +134,16 @@
 
 .contextMenu, .synergist{
     user-select:none;
+}
+/*------------Floatingsettings----------*/
+.floatingSetupMenu{
+    position:absolute;
+    background: white;
+}
+
+.floatingSetupMenu>span{
+    padding:10px;
+    display:block;
 }
 
 .floatingItem.moving{
@@ -128,3 +175,4 @@
 .phone .phoneNoShow{
     display:none;
 }
+
