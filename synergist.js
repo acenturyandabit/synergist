@@ -202,15 +202,16 @@ function synergist(div) {
             right: "More favourable"
         }
     };
+    // all the html stuff; brackets so you can hide it in an ide
+    this.makeHTML=function(){
     $(div).html(`
-    <div class="synergist-container">
-        <div class="synergist-banner">
+    <div class="synergist-container" >
+        <div class="synergist-banner" >
             <h1 contentEditable>Pad name</h1>
-            <h2>View: <span><span contenteditable class="viewName" data-listname='main'>Main</span><span>v</span><img class="gears" src="resources/gear.png">
-            
+            <h2>View: <span><span contenteditable class="viewName" data-listname='main'>Main</span><span>v</span>
             <div class="dropdown" style="display:none">
             </div>
-            </span></h2>
+            </span><img class="gears" src="resources/gear.png"></h2>
             <span class="plusbutton">More</span>
         </div>
         <div class="synergist">
@@ -218,70 +219,53 @@ function synergist(div) {
         <span class="leftLabelContainer"><span class="phoneNoShow"><<</span><span class="leftLabel" contentEditable>` + this.views.main.left + `</span></span>
         <span class="rightLabelContainer"><span class="rightLabel" contentEditable>` + this.views.main.right + `</span><span class="phoneNoShow">>>></span></span>
         </div>
-        <div class="overlay backOptionsMenu">
-            <div>
-                <div>
-                    <div>
-                    <h2>Options</h2>
-                    <p>View type:<select class="viewType">
-                    <option value="blank">Blank</option>
-                    <option value="singleAxis">Single Axis</option>
-                    <!--<option value="doubleAxis">Double Axis</option>-->
-                    
-                    </select> </p>
-                    <button class="done">Done</button>
-                    </div>
-                </div>
-            </div>
+        <div class="dialog backOptionsMenu">
+            <h2>Options</h2>
+            <p>View type:<select class="viewType">
+            <option value="blank">Blank</option>
+            <option value="singleAxis">Single Axis</option>
+            <!--<option value="doubleAxis">Double Axis</option>-->
+            
+            </select> </p>
         </div>
-        <div class="overlay moreMenu">
-            <div>
-                <div>
-                    <div>
-                    <h2>More options</h2>    
-                    <section class="wsm">
-                        <h3>Weighted scoring matrix</h3>
-                        <button>Generate weighted scoring matrix</button>
-                        </section>
-                        <button class="done">Done</button>
-                    </div>
-                    
-                </div>
-            </div>
+        <div class="dialog moreMenu">
+            <h2>More options</h2>
+            <section class="wsm">
+                <h3>Weighted scoring matrix</h3>
+                <button>Generate weighted scoring matrix</button>
+            </section>
+    
         </div>
         <div class="bottomDrawer specialScroll"></div>
         </div>
-    </div>
-    <div class="contextMenu" style="display:none; position:absolute;">
-        <li class="deleteButton">Delete</li>
-        <li class="hideButton">Hide from this view</li>
-        <li class="showOnlyButton">Show only in this view</li>
     </div>
     <div class="floatingSetupMenu" style="display:none; position:absolute;">
         <span>Background:<input class="jscolor" onchange="s.backColorUpdateReceived(this.jscolor)" value="ffffff"></span>
         <span>Text:<input class="jscolor" onchange="s.foreColorUpdateReceived(this.jscolor)" value="ffffff"></span>
     </div>
-    <div class="loginShield overlay" style="display:none; position:absolute;">
-    <div>
-        <div>
-            <div>
-            <section class="loading">
+    <div class="loginShield dialog noClose">
+        <section class="loading">
             <h2>Loading Gist...</h2>
-            </section>
-            <section class="oldGist">
+        </section>
+        <section class="oldGist">
             <h2>Enter password to continue</h2>
             <input placeholder="Password...">
-            <button class="done">Continue</button>
-            </section>
-            <section class="newGist">
+            <button>Continue</button>
+        </section>
+        <section class="newGist">
             <h2>Set a password for your gist!</h2>
             <input placeholder="Password...">
-            <button class="done">Continue</button>
-            </section>
-        </div>
-    </div>
+            <button>Continue</button>
+        </section>
     </div>
     `);
+        dialogManager.checkDialogs();
+    }
+    this.makeHTML();
+    // Title w/ mutation observer!
+    $("head").append(`<title>Loading Synergist...</title>`);
+    
+    //Install JScolor
     window.jscolor.installByClassName("jscolor");
     this.basediv = $(div).find(".synergist")[0];
     this.currentView = "main";
@@ -318,13 +302,14 @@ function synergist(div) {
         $(this.basediv).find(".floatingItem").remove();
         //load everything
         $("h1").text(d.name);
+        $("title").text(d.name+" - Synergist");
         for (i in d.views) {
             this.makeNewView(i, d.views[i]);
         }
         for (i in d.items) {
             this.makeNewItem(i, d.items[i]);
         }
-        this.switchView(Object.keys(this.views)[0]);
+        this.switchView("main");//all docs are guarunteed to have a main riiight???
     }
 
     $("body").on("keydown", (e) => {
@@ -339,20 +324,30 @@ function synergist(div) {
     })
 
     this.offlineLoad = function (name) {
-        this.localSavePrefix=name
+        this.localSavePrefix = name;
         let itm = JSON.parse(window.localStorage.getItem("synergist_data_" + this.localSavePrefix));
         if (itm) this.loadFromData(itm);
+        else{
+            $("h1").text(name);
+            $("title").text(name+" - Synergist");
+        }
     }
     //----------Web based loading----------//
     this.firebaseEnabled = false;
 
     this.firebaseLoadContinue = function (doc) {
+        let _syn=this;
         doc.onSnapshot(shot => {
             if (shot.metadata.hasPendingWrites) return;
             d = shot.data();
             //d contains name only.
-            if (!d) return;
+            if (!d) {
+                $("h1").text(_syn.localSavePrefix);
+                $("title").text(+syn.localSavePrefix+" - Synergist");
+                return;
+            }
             $("h1").text(d.name);
+            $("title").text(d.name+" - Synergist");
         })
         //collection for items
         this.itemCollection = doc.collection("items");
@@ -367,7 +362,7 @@ function synergist(div) {
                         self.items[c.doc.id].remoteUpdate(c.doc.data())
                         break;
                     case "removed":
-                        self.removeItem(c.doc.id);
+                        self.removeItem(c.doc.id,true);
                 }
             })
         })
@@ -381,9 +376,11 @@ function synergist(div) {
                         self.makeNewView(c.doc.id, c.doc.data(), true);
                         break;
                     case "modified":
-                        this.views[c.doc.id] = c.doc.data();
-                        if (this.currentView == c.doc.id) this.switchView(c.doc.id);
+                        self.views[c.doc.id] = c.doc.data();
+                        if (self.currentView == c.doc.id) self.switchView(c.doc.id);
                         break;
+                    case "removed":
+                        self.removeItem(c.doc.id,true);
                 }
             })
             if (self.firstRun) {
@@ -393,11 +390,11 @@ function synergist(div) {
         })
     }
 
-    this.registerFirebaseDoc = function (doc,name) {
-        this.localSavePrefix=name;
+    this.registerFirebaseDoc = function (doc, name) {
+        this.localSavePrefix = name;
         //show the cover
-        $(".loginShield").show();
-        $(".loginShield .loading").show();
+        $(".loginShield")[0].style.display="block";
+        $(".loginShield .loading")[0].style.display="block";
         //clear everything
         this.views = {};
         this.items = {};
@@ -464,6 +461,7 @@ function synergist(div) {
                 name: $("h1").text()
             });
         }
+        $("title").text($("h1").text()+" - Synergist");
     })
 
     //----------Items----------//
@@ -671,15 +669,40 @@ function synergist(div) {
         this.views[id] = obj;
     }
 
+    this.cloneView=function(viewName){
+        let newViewId=guid();
+        copyobj=Object.assign({},this.views[viewName]);
+        copyobj.name="Copy of "+ copyobj.name;
+        this.makeNewView(newViewId,copyobj);
+        if (this.firebaseEnabled) this.viewCollection.doc(newViewId).set(copyobj);
+        for (i in this.items){
+            this.items[i].viewData[newViewId]=Object.assign({},this.items[i].viewData[viewName]);
+        }
+        this.switchView(newViewId);
+        for (i in this.items){
+            this.items[i].webUpdatePosition();
+        }
+    }
+
+    this.destroyView=function(viewName, auto){
+        if (Object.keys(this.views).length==1){
+            alert("Ack! You can't remove the last view...");
+            return;
+        }
+        delete this.views[viewName];
+        if (this.firebaseEnabled && !auto) {
+            this.viewCollection.doc(viewName).delete();
+        }
+        this.switchView(Object.keys(this.views)[0]);
+    }
     //----------View options menu----------//
     $(".synergist-banner h2 .gears").on("click", () => {
         //also load the info
         $(".viewType")[0].value = this.views[this.currentView].type;
         $(".backOptionsMenu").show();
     })
-    $(".backOptionsMenu .done").on("click", () => {
+    $(".backOptionsMenu .cb").on("click", () => {
         this.switchView(this.currentView);
-        $(".backOptionsMenu").hide();
     })
     $(".viewType").on("change", () => {
         this.views[this.currentView].type = $(".viewType")[0].value;
@@ -742,10 +765,6 @@ function synergist(div) {
         }
 
     })
-
-    $(".moreMenu .done").on("click", () => {
-        $(".moreMenu").hide();
-    })
     //////////////////Banner//////////////////
 
     $("body").on("click", ".synergist-banner .dropdown li", (e) => {
@@ -782,7 +801,6 @@ function synergist(div) {
         if (!($(e.target).is("li") || $(e.target.parentElement).is("li"))) {
             $(".synergist-banner h2>span>div").hide();
         }
-        if (!$(e.target).is("li")) $(".contextMenu").hide();
         if (!$(e.target).is(".floatingSetupMenu *")) $(".floatingSetupMenu").hide();
     });
     $('.specialScroll').bind('mousewheel', function (e) {
@@ -792,16 +810,17 @@ function synergist(div) {
         e.currentTarget.scrollLeft += delta / 5;
     });
 
-    //----------Context menu----------//
-    $("body").on("contextmenu", ".floatingItem", (e) => {
-        let cte = e.target;
-        while (!$(cte).is(".floatingItem")) cte = cte.parentElement;
-        this.contextedElement = cte;
-        $(".contextMenu")[0].style.left = e.screenX - this.basediv.offsetLeft;
-        $(".contextMenu")[0].style.top = e.screenY - this.basediv.offsetTop;
-        $(".contextMenu").show();
-        e.preventDefault();
-    })
+    //----------Context menu for floatingItems----------//
+    contextMenuManager.registerContextMenu(
+        `<li class="deleteButton">Delete</li>
+        <li class="hideButton">Hide from this view</li>
+        <li class="showOnlyButton">Show only in this view</li>`,
+        $("body")[0],".floatingItem",(e) => {
+            let cte = e.target;
+            while (!$(cte).is(".floatingItem")) cte = cte.parentElement;
+            this.contextedElement = cte;
+        }
+    )
 
     $(".contextMenu .deleteButton").on("click", (e) => {
         //delete the div and delete its corresponding item
@@ -820,6 +839,24 @@ function synergist(div) {
         this.items[this.contextedElement.dataset.id].hide();
         $('.contextMenu').hide();
     })
+    //----------Context menu for views----------//
+    contextMenuManager.registerContextMenu(
+        `<li class="viewDeleteButton">Delete</li>
+        <li class="viewCloneButton">Clone this view</li>`,
+        $(".viewName")[0]);
+
+    $(".contextMenu .viewDeleteButton").on("click", (e) => {
+        //delete the view
+        this.destroyView(this.currentView);
+        $('.contextMenu').hide();
+    })
+
+    $(".contextMenu .viewCloneButton").on("click", (e) => {
+        //delete the view
+        this.cloneView(this.currentView);
+        $('.contextMenu').hide();
+    })
+
     //----------floating helper menu----------//
     $(this.basediv).on("click", ".floatingItem h3 img", (e) => {
         this.floatingSetupParent = e.currentTarget.parentElement.parentElement;
