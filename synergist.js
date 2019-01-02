@@ -1,3 +1,5 @@
+//dependency chainloader!!!
+
 function isPhone() {
     var mobiles = [
         "Android",
@@ -336,7 +338,8 @@ function synergist(div) {
         }
     })
 
-    this.tryLocalLoad = function () {
+    this.offlineLoad = function (name) {
+        this.localSavePrefix=name
         let itm = JSON.parse(window.localStorage.getItem("synergist_data_" + this.localSavePrefix));
         if (itm) this.loadFromData(itm);
     }
@@ -390,7 +393,8 @@ function synergist(div) {
         })
     }
 
-    this.registerFirebaseDoc = function (doc) {
+    this.registerFirebaseDoc = function (doc,name) {
+        this.localSavePrefix=name;
         //show the cover
         $(".loginShield").show();
         $(".loginShield .loading").show();
@@ -417,7 +421,7 @@ function synergist(div) {
                 //show set password button
 
             }
-            if (!d.data().password) {
+            if (!d.data() || !d.data().password) {
                 $(".loginShield .newGist").show();
                 $(".loginShield .newGist input").keyup(function (e) {
                     if (e.keyCode == 13)

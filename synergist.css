@@ -133,11 +133,6 @@
     width: 100%;
 }
 
-.overlay>div>div {
-    display: table-cell;
-    vertical-align: middle;
-}
-
 .overlay>div>div>div {
     display: flex;
     flex-direction: column;
