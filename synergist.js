@@ -240,8 +240,8 @@ function synergist(div) {
         </div>
     </div>
     <div class="floatingSetupMenu" style="display:none; position:absolute;">
-        <span>Background:<input class="jscolor" onchange="s.backColorUpdateReceived(this.jscolor)" value="ffffff"></span>
-        <span>Text:<input class="jscolor" onchange="s.foreColorUpdateReceived(this.jscolor)" value="ffffff"></span>
+        <span>Background:<input class="jscolor backcolor" onchange="fireman.thing.backColorUpdateReceived(this.jscolor)" value="ffffff"></span>
+        <span>Text:<input class="jscolor forecolor" onchange="fireman.thing.foreColorUpdateReceived(this.jscolor)" value="ffffff"></span>
     </div>
     <div class="loginShield dialog noClose">
         <section class="loading">
@@ -865,12 +865,15 @@ function synergist(div) {
         $(".floatingSetupMenu")[0].style.top = this.floatingSetupParent.offsetTop + this.floatingSetupParent.parentElement.offsetTop + this.floatingSetupParent.offsetHeight + 10;
         e.stopPropagation();
     })
-
+    $("floatingSetupMenu input.backcolor").on("change", this.backColorUpdateReceived);
+    $("floatingSetupMenu input.forecolor").on("change", this.foreColorUpdateReceived);
     this.backColorUpdateReceived = function (jscolor) {
+        //jscolor=jscolor.jscolor;
         this.floatingSetupParent.style.background = "#" + jscolor;
         this.items[this.floatingSetupParent.dataset.id].webUpdateColor();
     }
     this.foreColorUpdateReceived = function (jscolor) {
+        //jscolor=jscolor.jscolor;
         this.floatingSetupParent.style.color = "#" + jscolor;
         this.items[this.floatingSetupParent.dataset.id].webUpdateColor();
     }
@@ -878,4 +881,10 @@ function synergist(div) {
     this.makeNewView("main");
     this.views["main"].name = "Main";
     this.switchView("main");
+    //tutorial
+    this.registerTutorial=function(){
+        $(".floatingItem[data-id='13'] p").on("click", ()=>{
+            window.location.href=window.location.href.replace("&tute","");
+        })
+    }
 }
