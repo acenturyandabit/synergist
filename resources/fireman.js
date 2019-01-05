@@ -1,4 +1,4 @@
-// V1.1
+// V3.3: improved options a bit more
 
 /*
 toInitialise(root div){
@@ -7,72 +7,160 @@ toInitialise(root div){
     registerFirebaseDoc(doc as firebaseDocument, name as string); //load online from a firebase document.
 }
 */
-var fireman={
-    toInitialise: synergist,
-    
-    // this needs to be a function otherwise it will return null before the document is loaded!
-    rootElement:()=>{return document.body}, 
 
-    //the query keyword for different documents. For example, if your HTML URL querystring identifies documents by mysite.com/?document=, then the documentQueryKeyword is "document".
-    documentQueryKeyword:"gist",
+function _fireman(userSettings) {
+    this.settings = {
+        //Loading function for remote.
+        documentQueryKeyword: "doc",
+        //the query keyword for different documents. For example, if your HTML URL querystring identifies documents by mysite.com/?document=, then the documentQueryKeyword is "document".
+        load: function (doc, id) {
 
-    //querystring parameter if you want your application to work offline.
-    offlineKeyword:"offline",
+        },
+        //autocreate: set to true if queries directed at nonexistent documents results in their creation.
+        autocreate: false,
+        makeNewDocument: function (doc, id) {
 
-    //querystring parameter for tutorial. 
-    tutorialQueryKeyword:"tute",
-    //If the tutorial is not a separate document, and you still want to load a document, set this to true.
-    inlineTutorial:false,
-    tutorialFunction:(thing)=>{
-        thing.loadFromData(me.tutorialData);
-        
-    },
-    //The data to send to loadData if this is indeed a tutorial.
-    tutorialData:{"views":{"1545790901615":{"left":"Less favourable","name":"Views","right":"More favourable","type":"singleAxis"},"1545791235016":{"left":"Less favourable","name":"Collaboration","right":"More favourable","type":"singleAxis"},"1545971755534":{"left":"Less favourable","name":"More","right":"More favourable","type":"singleAxis"},"main":{"left":"Less favourable","name":"Introduction","right":"More favourable","type":"singleAxis"}},"items":[{"viewData":{"1545790901615":{"hidden":true,"x":0.0234375,"y":0.6818757921419518},"1545791235016":{"hidden":true,"x":0.7489583333333333,"y":0.12688442211055276},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":false,"x":0.3463541666666667,"y":0.15201005025125627}},"title":"How does it work?","description":"Synergist revolves around Items and Views.\n\nItems are these little white boxes. Double click anywhere in the grey region to add an item! \n\nTo edit the contents of an item, just click the thing you want to edit, and edit it :)","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":false,"x":0.39166666666666666,"y":0.17997465145754118},"1545791235016":{"hidden":true,"x":0.4,"y":0.39824120603015073},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":true,"x":0.09270833333333334,"y":0.36055276381909546}},"title":"Editing views","description":"You can edit the name of a view by clicking the name on the top left and typing. \n\nThe \"less favourable\" and \"more favourable\" arrows can also be edited, to create a  scale from left to right. Again, just click and type :)","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":true,"x":0.3963541666666667,"y":0.7275031685678074},"1545791235016":{"hidden":true,"x":0.45677083333333335,"y":0.23115577889447236},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":true,"x":0.6057291666666667,"y":0.6030150753768844}},"title":"Have fun!","description":":)","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":true,"x":0.05416666666666667,"y":0.7110266159695817},"1545791235016":{"hidden":true,"x":0,"y":0},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":false,"x":0.5005208333333333,"y":0.24623115577889448}},"title":"Manipulating items","description":"To rearrange items, click and drag them around the canvas.\n\nYou can double click an item to lock it in place, to allow for easy editing.\n\nTo delete an item, right click on it and press the delete button in the popup.","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":false,"x":0.27291666666666664,"y":0.17110266159695817},"1545791235016":{"hidden":true,"x":0.4,"y":0.39824120603015073},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":true,"x":0.3416666666666667,"y":0.44472361809045224}},"title":"Views","description":"You can use different views to represent different organisations of items. \n\nYou've probably met the \"Add another view\" button, which is how you add new views!\n","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":true,"x":0.4,"y":0.39923954372623577},"1545791235016":{"hidden":true,"x":0.4,"y":0.39949748743718594},"1545971755534":{"hidden":false,"x":0.4979166666666667,"y":0.5617084917617237},"main":{"hidden":true,"x":0.4,"y":0.39824120603015073}},"title":"Unhiding","description":"You can unhide items by dragging them out of the bottom bar.","forecolor":"rgb(0, 0, 0)","backcolor":"rgb(236, 59, 255)"},{"viewData":{"1545790901615":{"hidden":true,"x":0.4,"y":0.39923954372623577},"1545791235016":{"hidden":true,"x":0.4,"y":0.39949748743718594},"1545971755534":{"hidden":false,"x":0.5151041666666667,"y":0.11153358681875793},"main":{"hidden":true,"x":0.4,"y":0.39824120603015073}},"title":"Context menu","description":"Right click on any item to show its context menu. From there you can show or hide items on different views.","forecolor":"rgb(0, 0, 0)","backcolor":"rgb(255, 160, 77)"},{"viewData":{"1545790901615":{"hidden":true,"x":0.353125,"y":0.5424588086185045},"1545791235016":{"x":0.2838541666666667,"y":0.16834170854271358},"1545971755534":{"hidden":true,"x":0.6057291666666667,"y":0.6780735107731305},"main":{"hidden":true,"x":0.4244791666666667,"y":0.3907035175879397}},"title":"Collaboration","description":"All gists are stored on Firebase, so you can collaborate with your friends in real time online.\n\nTo collaborate with your teammates on a gist, simply drop them the url :)\n\nTo create a new gist, replace the \"Name\" in ?gist=\"Name\" with your own gist name.","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":false,"x":0.625,"y":0.15462610899873258},"1545791235016":{"hidden":true,"x":0.4,"y":0.39824120603015073},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":true,"x":0.36875,"y":0.5917085427135679}},"title":"Capiche?","description":"Check out the next view to continue!","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":true,"x":0.05416666666666667,"y":0.7351077313054499},"1545791235016":{"hidden":true,"x":0,"y":0},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":false,"x":0.640625,"y":0.30527638190954776}},"title":"Capice?","description":"There's more! \n\nEach screen is a view. Views allow items to be organised in different ways. \n\nTo switch a view, go to the top left dropdown menu [Tutorial v] and click the (v) to switch to another view.","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":true,"x":0.051041666666666666,"y":0.7769328263624842},"1545791235016":{"hidden":true,"x":0,"y":0},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":false,"x":0.18177083333333333,"y":0.0992462311557789}},"title":"Hey there!","description":"Welcome to Synergist! \n\nSynergist is a platform for organising notes, ideas or whatever you want!","forecolor":"rgb(0, 0, 0)","backcolor":"rgb(13, 255, 96)"},{"viewData":{"1545790901615":{"hidden":false,"x":0.50625,"y":0.16476552598225602},"1545791235016":{"hidden":true,"x":0.5322916666666667,"y":0.43844221105527637},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":true,"x":0.08385416666666666,"y":0.6457286432160804}},"title":"Items and views","description":"Items recall their position in each view; so dragging items on one view won't affect their positions on another view. This is useful if you want to cluster items or sort them by different categories.\n\nAs of right now, items are present on all views, but I'm working on changing this :3","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":true,"x":0.4,"y":0.39923954372623577},"1545791235016":{"hidden":true,"x":0.4,"y":0.39949748743718594},"1545971755534":{"hidden":false,"x":0.328125,"y":0.2719822560202788},"main":{"hidden":true,"x":0.796875,"y":0.9786432160804021}},"title":"More features","description":"The little settings cog in the top right corner will show some extra features, like changing the colour of your items :)","forecolor":"rgb(0, 0, 0)","backcolor":"rgb(33, 255, 248)"},{"viewData":{"1545790901615":{"x":0.4,"y":0.4,"hidden":true},"1545791235016":{"x":0.4,"y":0.39949748743718594,"hidden":true},"1545971755534":{"x":0.4,"y":0.4,"hidden":true},"main":{"x":0.17291666666666666,"y":0.5489949748743719,"hidden":false}},"title":"All done?","description":"Click here to finish the tutorial!","forecolor":"","backcolor":""}],"name":"Tutorial"},
-   
-    //firebase configuration
-    config:{
-        apiKey: "AIzaSyA-sH4oDS4FNyaKX48PSpb1kboGxZsw9BQ",
-        authDomain: "backbits-567dd.firebaseapp.com",
-        databaseURL: "https://backbits-567dd.firebaseio.com",
-        projectId: "backbits-567dd",
-        storageBucket: "backbits-567dd.appspot.com",
-        messagingSenderId: "894862693076"
-    },
-    //doc to generate to be sent to registerFirebaseDoc.
-    generateDoc: function(docName){
-        return this.db.collection("synergist").doc(docName);
-    },
+        },
+        //passwall: Set to true if you want fireman to use a simple password access wall to allow access to data. 
+        passwall: false,
+        //autopass: If this is true and autocreate is true, Fireman will also prompt for the creation of a password.
+        autopass: false,
+        //Which key in the object to use to store the password.
+        passwordKeyname: "",
 
-    init: function(){
-        firebase.initializeApp(this.config);
-        this.db=firebase.firestore();   
-        this.db.settings({
-            timestampsInSnapshots: true
-        });
-        let me=this;
-        document.addEventListener("DOMContentLoaded", function(){
-            me.params = new URLSearchParams(window.location.search);
-            me.thing = new me.toInitialise(me.rootElement());
-            if (me.params.has(me.tutorialQueryKeyword) && !me.inlineTutorial){
-                me.thing.loadFromData(me.tutorialData);
-                me.thing.registerTutorial();
-            }else{
-                if (me.params.has(me.documentQueryKeyword)) {
-                    me.documentName = me.params.get(me.documentQueryKeyword);
-                    if (!me.params.has(me.offlineKeyword)){
-                        me.thing.registerFirebaseDoc(me.generateDoc(me.documentName),me.documentName);
-                    }else{
-                        me.thing.offlineLoad(me.documentName);
-                    }
-                }
-                if (me.params.has(me.tutorialQueryKeyword) && me.inlineTutorial){
-                    me.tutorialFunction(me.thing);
+        //----------Handle blank urls----------//
+        //If the url is literally blank with no tutorial, then this function is called.
+        blank: function () {
+
+        },
+
+        //----------Options for working offline----------//
+        //querystring parameter if you want your application to work offline.
+        offlineKeyword: undefined,
+        //Loading function for local. Leave blank if you do not support local loading.
+        offlineLoad: function (id) {
+
+        },
+
+        //----------Options for a tutorial----------//
+        //querystring parameter for tutorial. 
+        tutorialQueryKeyword: undefined,
+        //function for the tutorial. 
+        tutorialFunction: (doc, id) => {
+
+        },
+
+        //firebase configuration
+        config: {},
+        //doc to generate to be sent to registerFirebaseDoc
+        generateDoc: function (db, docName) {
+            return db.doc(docName);
+        }
+    }
+    Object.assign(this.settings, userSettings);
+    firebase.initializeApp(this.settings.config);
+    this.db = firebase.firestore();
+    this.db.settings({
+        timestampsInSnapshots: true
+    });
+    let me = this;
+    this._init = function () {
+        me.params = new URLSearchParams(window.location.search);
+        //get passwall ready if need be, just in case
+        if (me.settings.passwall) {
+            let d = document.createElement("div");
+            d.classList.add("firemanLoadingContainer");
+            d.style = "width: 100%; height: 100%; display: block;position:absolute;width:100%;height:100%; top:0;left:0;";
+            d.innerHTML = `
+                <div style="position: absolute; top:0;left:0;width:100%;height:100%;background:blue; display:table">
+                    <div style="vertical-align:middle; display:table-cell">
+                        <div style="margin: auto; height: 60vh; width: 40vw; background-color: white; border-radius: 30px; padding: 30px; color:black;">
+                        <section class="loading">
+                            <h2>Loading...</h2>
+                        </section>
+                        <section class="oldDoc" style="display:none">
+                            <h2 class="oldDocPasswordInvalidate">Enter password to continue</h2>
+                            <input class="oldDocPasswordInput" placeholder="Password...">
+                            <button class="oldDocPasswordValidate">Continue</button>
+                        </section>
+                        <section class="newDoc" style="display:none">
+                            <h2>Set a password for your gist!</h2>
+                            <input class="newDocPasswordInput" placeholder="Password...">
+                            <button class="newDocPasswordValidate">Continue</button>
+                        </section>
+                        </div>
+                    </div>
+                </div>
+                `;
+            document.body.appendChild(d);
+        }
+        if (me.params.has(me.settings.documentQueryKeyword)) {
+            me.settings.documentName = me.params.get(me.settings.documentQueryKeyword);
+            //local loading
+            if (me.params.has(me.settings.offlineKeyword)) {
+                me.settings.offlineLoad(me.settings.documentName);
+            } else {
+                //----------Handle password wall----------//
+                if (me.settings.passwall) {
+                    me.settings.generateDoc(me.db, me.settings.documentName).onSnapshot((shot) => {
+                        if (shot.exists) {
+                            document.getElementsByClassName("loading")[0].style.display = "none";
+                            document.getElementsByClassName("oldDoc")[0].style.display = "block";
+                            document.getElementsByClassName("oldDocPasswordInput")[0].addEventListener("keyup", (e) => {
+                                if (e.keyCode == 13) {
+                                    document.getElementsByClassName("oldDocPasswordValidate")[0].click();
+                                }
+                            });
+                            document.getElementsByClassName("oldDocPasswordValidate")[0].addEventListener("click", (e) => {
+                                let submittedPassword = document.getElementsByClassName("oldDocPasswordInput")[0].value;
+                                me.settings.generateDoc(me.db, me.settings.documentName).onSnapshot((shot) => {
+                                    if (shot.data()[me.settings.passwordKeyname] == submittedPassword) {
+                                        if (me.params.has(me.settings.tutorialQueryKeyword)) me.settings.tutorialFunction(me.settings.generateDoc(me.db, me.settings.documentName), me.settings.documentName);
+                                        else me.settings.load(me.settings.generateDoc(me.db, me.settings.documentName), me.settings.documentName);
+                                        document.getElementsByClassName("firemanLoadingContainer")[0].style.display = "none";
+                                    } else {
+                                        document.getElementsByClassName("oldDocPasswordInvalidate")[0].innerText = "Invalid password... Try again!";
+                                        document.getElementsByClassName("oldDocPasswordInput")[0].value = "";
+                                    }
+                                })
+                            });
+                        } else if (me.settings.autocreate) {
+                            if (me.settings.autopass) {
+                                document.getElementsByClassName("loading")[0].style.display = "none";
+                                document.getElementsByClassName("newDoc")[0].style.display = "block";
+                                document.getElementsByClassName("newDocPasswordInput")[0].addEventListener("keyup", (e) => {
+                                    if (e.keyCode == 13) {
+                                        document.getElementsByClassName("newDocPasswordValidate")[0].click();
+                                    }
+                                });
+                                document.getElementsByClassName("newDocPasswordValidate")[0].addEventListener("click", (e) => {
+                                    me.settings.generateDoc(me.db, me.settings.documentName).set({
+                                        "password": document.getElementsByClassName("newDocPasswordInput")[0].value
+                                    });
+                                    document.getElementsByClassName("firemanLoadingContainer")[0].style.display = "none";
+                                    me.settings.makeNewDocument(me.settings.generateDoc(me.db, me.settings.documentName), me.settings.documentName);
+                                });
+                            } else {
+                                me.settings.makeNewDocument(me.settings.generateDoc(me.db, me.settings.documentName), me.settings.documentName);
+                            }
+                        } else {
+                            //something something fail?
+                        }
+                    });
+
+                } else {
+                    if (me.params.has(me.settings.tutorialQueryKeyword)) me.settings.tutorialFunction(me.settings.generateDoc(me.db, me.settings.documentName), me.settings.documentName);
+                    else me.settings.load(me.settings.generateDoc(me.db, me.settings.documentName), me.settings.documentName);
                 }
             }
-        });
-    }
-
+        } else if (me.params.has(me.settings.tutorialQueryKeyword)) {
+            document.getElementsByClassName("firemanLoadingContainer")[0].style.display = "none";
+            me.settings.tutorialFunction();
+        }else{
+            document.getElementsByClassName("firemanLoadingContainer")[0].style.display = "none";
+            me.settings.blank();
+        }
+    };
+    if (document.readyState != "loading") this._init();
+    else document.addEventListener("DOMContentLoaded", () => this._init());
 }
-
-fireman.init();

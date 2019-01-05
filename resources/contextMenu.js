@@ -1,7 +1,7 @@
-//V0.0. Context menu manager.
+//V1.0. Context menu manager.
 
 contextMenuManager={
-    registerContextMenu:(menu,element,delegate, eventPassThrough)=>{
+    registerContextMenu:(menu,element,delegate, contextmenuEventPassThrough)=>{
         let thisCTXM=document.createElement("div");
         $(thisCTXM).append(menu);
         thisCTXM.classList.add("contextMenu");
@@ -12,7 +12,7 @@ contextMenuManager={
             thisCTXM.style.top = e.clientY;// - element.offsetTop;
             thisCTXM.style.display="block";
             e.preventDefault();
-            if (eventPassThrough)eventPassThrough(e);
+            if (contextmenuEventPassThrough)contextmenuEventPassThrough(e);
         };
         if (delegate){ //it's a class
             $(element).on("contextmenu",delegate, f);

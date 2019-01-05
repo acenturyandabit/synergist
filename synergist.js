@@ -57,17 +57,17 @@ function floatingItem(_synergist, x, y, id) {
     }
 
     //----------Updating functions----------//
-    this.makeNewView = function (name) {
+    this.makeNewView = function (name,show=false) {
         this.viewData[name] = {
             x: 0.4,
             y: 0.4,
-            hidden: false
+            hidden: show
         };
     }
 
     this.assertView = function (name) {
         if (this.viewData[name] == undefined || this.viewData[name].x == undefined || this.viewData[name].y == undefined) {
-            this.makeNewView(name);
+            this.makeNewView(name,true);
         }
     }
 
@@ -158,7 +158,7 @@ function floatingItem(_synergist, x, y, id) {
             this.viewData[v] = {
                 x: 0.4,
                 y: 0.4,
-                hidden: false
+                hidden: true
             };
         })
         this.viewData[this.currentView] = {
@@ -191,9 +191,10 @@ function floatingItem(_synergist, x, y, id) {
     }
 }
 
-function synergist(div) {
+function _synergist(div) {
     //----------Initialisation----------//
     this.items = {};
+    let self=this;
     this.localSavePrefix = "";
     this.views = {
         "main": {
@@ -203,8 +204,8 @@ function synergist(div) {
         }
     };
     // all the html stuff; brackets so you can hide it in an ide
-    this.makeHTML=function(){
-    $(div).html(`
+    this.makeHTML = function () {
+        $(div).html(`
     <div class="synergist-container" >
         <div class="synergist-banner" >
             <h1 contentEditable>Pad name</h1>
@@ -243,20 +244,18 @@ function synergist(div) {
         <span>Background:<input class="jscolor backcolor" onchange="fireman.thing.backColorUpdateReceived(this.jscolor)" value="ffffff"></span>
         <span>Text:<input class="jscolor forecolor" onchange="fireman.thing.foreColorUpdateReceived(this.jscolor)" value="ffffff"></span>
     </div>
-    <div class="loginShield dialog noClose">
-        <section class="loading">
-            <h2>Loading Gist...</h2>
-        </section>
-        <section class="oldGist">
-            <h2>Enter password to continue</h2>
-            <input placeholder="Password...">
-            <button>Continue</button>
-        </section>
-        <section class="newGist">
-            <h2>Set a password for your gist!</h2>
-            <input placeholder="Password...">
-            <button>Continue</button>
-        </section>
+    <div class="splashScreen dialog noClose">
+        <h1>Welcome to synergist!</h1>
+        <h2>Make a new document</h2>
+        <input  placeholder="Enter Name..."class="newGistName"><br>
+        <button class="newOnlineButton">Make an online (shared) gist</button><br>
+        <button class="newOfflineButton">Make an offline (local) gist</button>
+        <h2>Open a recent document:</h2>
+        <div class="recentDocuments">
+            <p>Nothing to show here :3</p>
+        </div>
+        <h2>First time here? Check out our tutorial :)</h2>
+        <a href="?tute">Click here!</a>
     </div>
     `);
         dialogManager.checkDialogs();
@@ -264,7 +263,7 @@ function synergist(div) {
     this.makeHTML();
     // Title w/ mutation observer!
     $("head").append(`<title>Loading Synergist...</title>`);
-    
+
     //Install JScolor
     window.jscolor.installByClassName("jscolor");
     this.basediv = $(div).find(".synergist")[0];
@@ -302,14 +301,14 @@ function synergist(div) {
         $(this.basediv).find(".floatingItem").remove();
         //load everything
         $("h1").text(d.name);
-        $("title").text(d.name+" - Synergist");
+        $("title").text(d.name + " - Synergist");
         for (i in d.views) {
             this.makeNewView(i, d.views[i]);
         }
         for (i in d.items) {
             this.makeNewItem(i, d.items[i]);
         }
-        this.switchView("main");//all docs are guarunteed to have a main riiight???
+        this.switchView("main"); //all docs are guarunteed to have a main riiight???
     }
 
     $("body").on("keydown", (e) => {
@@ -327,27 +326,27 @@ function synergist(div) {
         this.localSavePrefix = name;
         let itm = JSON.parse(window.localStorage.getItem("synergist_data_" + this.localSavePrefix));
         if (itm) this.loadFromData(itm);
-        else{
+        else {
             $("h1").text(name);
-            $("title").text(name+" - Synergist");
+            $("title").text(name + " - Synergist");
         }
     }
     //----------Web based loading----------//
     this.firebaseEnabled = false;
 
     this.firebaseLoadContinue = function (doc) {
-        let _syn=this;
+        let _syn = this;
         doc.onSnapshot(shot => {
-            if (shot.metadata.hasPendingWrites) return;
+            //if (shot.metadata.hasPendingWrites) return;
             d = shot.data();
             //d contains name only.
             if (!d) {
                 $("h1").text(_syn.localSavePrefix);
-                $("title").text(+syn.localSavePrefix+" - Synergist");
+                $("title").text(+syn.localSavePrefix + " - Synergist");
                 return;
             }
             $("h1").text(d.name);
-            $("title").text(d.name+" - Synergist");
+            $("title").text(d.name + " - Synergist");
         })
         //collection for items
         this.itemCollection = doc.collection("items");
@@ -362,7 +361,7 @@ function synergist(div) {
                         self.items[c.doc.id].remoteUpdate(c.doc.data())
                         break;
                     case "removed":
-                        self.removeItem(c.doc.id,true);
+                        self.removeItem(c.doc.id, true);
                 }
             })
         })
@@ -380,7 +379,7 @@ function synergist(div) {
                         if (self.currentView == c.doc.id) self.switchView(c.doc.id);
                         break;
                     case "removed":
-                        self.removeItem(c.doc.id,true);
+                        self.removeItem(c.doc.id, true);
                 }
             })
             if (self.firstRun) {
@@ -393,20 +392,16 @@ function synergist(div) {
     this.registerFirebaseDoc = function (doc, name) {
         this.localSavePrefix = name;
         //show the cover
-        $(".loginShield")[0].style.display="block";
-        $(".loginShield .loading")[0].style.display="block";
         //clear everything
         this.views = {};
         this.items = {};
         //start firebase
-        self = this;
         this.firebaseEnabled = true;
         this.firebaseDoc = doc;
         doc.get().then(d => {
-            $(".loginShield .loading").hide();
-            if (!d.exists) {
-                doc.set({
-                    name: 'Pad Name'
+            if (!d.exists || !(d.data().name)) {
+                doc.update({
+                    name: self.localSavePrefix
                 });
                 let firstView = {
                     name: "Main",
@@ -415,42 +410,8 @@ function synergist(div) {
                 }
                 doc.collection("views").doc("main").set(firstView);
                 self.makeNewView("main", firstView);
-                //show set password button
-
             }
-            if (!d.data() || !d.data().password) {
-                $(".loginShield .newGist").show();
-                $(".loginShield .newGist input").keyup(function (e) {
-                    if (e.keyCode == 13)
-                        $(".loginShield .newGist button").click();
-                });
-
-                $(".loginShield .newGist button").on("click", () => {
-                    doc.update({
-                        "password": $(".loginShield .newGist input")[0].value
-                    });
-                    $(".loginShield").hide();
-                    self.firebaseLoadContinue(doc);
-                });
-            } else {
-                //show login button and validate
-                __pass = d.data().password;
-                $(".loginShield .oldGist").show();
-                $(".loginShield .oldGist input").keyup(function (e) {
-                    if (e.keyCode == 13)
-                        $(".loginShield .oldGist button").click();
-                });
-                $(".loginShield .oldGist button").on("click", () => {
-                    if (__pass == $(".loginShield .oldGist input")[0].value) {
-                        $(".loginShield").hide();
-                        self.firebaseLoadContinue(doc);
-                    } else {
-                        $(".loginShield .oldGist h2").text("Incorrect password :/ Please try again!");
-                        $(".loginShield .oldGist input")[0].value = "";
-                    }
-                })
-            }
-            //register events for clicking buttons and whatnot
+            self.firebaseLoadContinue(doc);
         })
     }
 
@@ -461,7 +422,7 @@ function synergist(div) {
                 name: $("h1").text()
             });
         }
-        $("title").text($("h1").text()+" - Synergist");
+        $("title").text($("h1").text() + " - Synergist");
     })
 
     //----------Items----------//
@@ -669,23 +630,23 @@ function synergist(div) {
         this.views[id] = obj;
     }
 
-    this.cloneView=function(viewName){
-        let newViewId=guid();
-        copyobj=Object.assign({},this.views[viewName]);
-        copyobj.name="Copy of "+ copyobj.name;
-        this.makeNewView(newViewId,copyobj);
+    this.cloneView = function (viewName) {
+        let newViewId = guid();
+        copyobj = Object.assign({}, this.views[viewName]);
+        copyobj.name = "Copy of " + copyobj.name;
+        this.makeNewView(newViewId, copyobj);
         if (this.firebaseEnabled) this.viewCollection.doc(newViewId).set(copyobj);
-        for (i in this.items){
-            this.items[i].viewData[newViewId]=Object.assign({},this.items[i].viewData[viewName]);
+        for (i in this.items) {
+            this.items[i].viewData[newViewId] = Object.assign({}, this.items[i].viewData[viewName]);
         }
         this.switchView(newViewId);
-        for (i in this.items){
+        for (i in this.items) {
             this.items[i].webUpdatePosition();
         }
     }
 
-    this.destroyView=function(viewName, auto){
-        if (Object.keys(this.views).length==1){
+    this.destroyView = function (viewName, auto) {
+        if (Object.keys(this.views).length == 1) {
             alert("Ack! You can't remove the last view...");
             return;
         }
@@ -815,7 +776,7 @@ function synergist(div) {
         `<li class="deleteButton">Delete</li>
         <li class="hideButton">Hide from this view</li>
         <li class="showOnlyButton">Show only in this view</li>`,
-        $("body")[0],".floatingItem",(e) => {
+        $("body")[0], ".floatingItem", (e) => {
             let cte = e.target;
             while (!$(cte).is(".floatingItem")) cte = cte.parentElement;
             this.contextedElement = cte;
@@ -881,10 +842,101 @@ function synergist(div) {
     this.makeNewView("main");
     this.views["main"].name = "Main";
     this.switchView("main");
-    //tutorial
-    this.registerTutorial=function(){
-        $(".floatingItem[data-id='13'] p").on("click", ()=>{
-            window.location.href=window.location.href.replace("&tute","");
+    //----------tutorial----------//
+    this.registerTutorial = function () {
+        $(".floatingItem[data-id='13'] p").on("click", () => {
+            window.location.href = window.location.href.replace("&tute", "");
         })
     }
+    //----------Show splash screen----------//
+    this.showSplash=function(){
+        //populate recent documents
+        let recents=JSON.parse(localStorage.getItem("___synergist_recent_docs"));
+        if (recents){
+            $(".recentDocuments").empty();
+            for (i=0;i<recents.length;i++){
+                let url=window.location.href+"?gist="+recents[i].gistName;
+                if (recents[i].type=="offline"){
+                    url+="&offline";
+                }
+                $(".recentDocuments").append(`<p><a href=`+url+`>`+recents[i].gistName+`</a></p>`);
+            }
+        }
+        $(".splashScreen").show();
+    }
+    $(".newOnlineButton").on("click",()=>{
+        if ($(".newGistName")[0].value.length){
+            window.location.href=window.location.href+"?gist="+$(".newGistName")[0].value;
+        }
+    });
+    $(".newOfflineButton").on("click",()=>{
+        if ($(".newGistName")[0].value.length){
+            window.location.href=window.location.href+"?gist="+$(".newGistName")[0].value+"&offline";
+        }
+    });
 }
+
+$(()=>{
+    synergist=new _synergist(document.body); 
+    fireman=new _fireman({
+        documentQueryKeyword:"gist",
+        load: (doc,id)=>{
+            //update the recents
+            let recents=JSON.parse(localStorage.getItem("___synergist_recent_docs"));
+            if (!recents)recents=[];
+            let seenbefore=false;
+            recents.forEach((v)=>{if (v.gistName==id && !v.offline){seenbefore=true}});
+            if(!seenbefore){
+                recents.push({gistName:id});
+                localStorage.setItem("___synergist_recent_docs",JSON.stringify(recents));
+            }
+            synergist.registerFirebaseDoc(doc,id);
+        },
+        autocreate:true,
+        makeNewDocument:function(doc, id){
+            let recents=JSON.parse(localStorage.getItem("___synergist_recent_docs"));
+            if (!recents)recents=[];
+            let seenbefore=false;
+            recents.forEach((v)=>{if (v.gistName==id && !v.offline){seenbefore=true}});
+            if(!seenbefore){
+                recents.push({gistName:id});
+                localStorage.setItem("___synergist_recent_docs",JSON.stringify(recents));
+            }
+            synergist.registerFirebaseDoc(doc,id);
+        },
+        passwall:true,
+        autopass: true,
+        passwordKeyname: "password",
+
+        offlineKeyword:"offline",
+        offlineLoad:(id)=>{
+            let recents=JSON.parse(localStorage.getItem("___synergist_recent_docs"));
+            let seenbefore=false;
+            recents.forEach((v)=>{if (v.gistName==id && v.offline){seenbefore=true}});
+            if(!seenbefore){
+                recents.push({gistName:id});
+                localStorage.setItem("___synergist_recent_docs",JSON.stringify(recents));
+            }
+            synergist.offlineLoad(me.documentName);
+        },
+        tutorialQueryKeyword:"tute",
+        tutorialFunction: (doc, id)=>{
+            synergist.loadFromData({"views":{"1545790901615":{"left":"Less favourable","name":"Views","right":"More favourable","type":"singleAxis"},"1545791235016":{"left":"Less favourable","name":"Collaboration","right":"More favourable","type":"singleAxis"},"1545971755534":{"left":"Less favourable","name":"More","right":"More favourable","type":"singleAxis"},"main":{"left":"Less favourable","name":"Introduction","right":"More favourable","type":"singleAxis"}},"items":[{"viewData":{"1545790901615":{"hidden":true,"x":0.0234375,"y":0.6818757921419518},"1545791235016":{"hidden":true,"x":0.7489583333333333,"y":0.12688442211055276},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":false,"x":0.3463541666666667,"y":0.15201005025125627}},"title":"How does it work?","description":"Synergist revolves around Items and Views.\n\nItems are these little white boxes. Double click anywhere in the grey region to add an item! \n\nTo edit the contents of an item, just click the thing you want to edit, and edit it :)","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":false,"x":0.39166666666666666,"y":0.17997465145754118},"1545791235016":{"hidden":true,"x":0.4,"y":0.39824120603015073},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":true,"x":0.09270833333333334,"y":0.36055276381909546}},"title":"Editing views","description":"You can edit the name of a view by clicking the name on the top left and typing. \n\nThe \"less favourable\" and \"more favourable\" arrows can also be edited, to create a  scale from left to right. Again, just click and type :)","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":true,"x":0.3963541666666667,"y":0.7275031685678074},"1545791235016":{"hidden":true,"x":0.45677083333333335,"y":0.23115577889447236},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":true,"x":0.6057291666666667,"y":0.6030150753768844}},"title":"Have fun!","description":":)","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":true,"x":0.05416666666666667,"y":0.7110266159695817},"1545791235016":{"hidden":true,"x":0,"y":0},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":false,"x":0.5005208333333333,"y":0.24623115577889448}},"title":"Manipulating items","description":"To rearrange items, click and drag them around the canvas.\n\nYou can double click an item to lock it in place, to allow for easy editing.\n\nTo delete an item, right click on it and press the delete button in the popup.","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":false,"x":0.27291666666666664,"y":0.17110266159695817},"1545791235016":{"hidden":true,"x":0.4,"y":0.39824120603015073},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":true,"x":0.3416666666666667,"y":0.44472361809045224}},"title":"Views","description":"You can use different views to represent different organisations of items. \n\nYou've probably met the \"Add another view\" button, which is how you add new views!\n","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":true,"x":0.4,"y":0.39923954372623577},"1545791235016":{"hidden":true,"x":0.4,"y":0.39949748743718594},"1545971755534":{"hidden":false,"x":0.4979166666666667,"y":0.5617084917617237},"main":{"hidden":true,"x":0.4,"y":0.39824120603015073}},"title":"Unhiding","description":"You can unhide items by dragging them out of the bottom bar.","forecolor":"rgb(0, 0, 0)","backcolor":"rgb(236, 59, 255)"},{"viewData":{"1545790901615":{"hidden":true,"x":0.4,"y":0.39923954372623577},"1545791235016":{"hidden":true,"x":0.4,"y":0.39949748743718594},"1545971755534":{"hidden":false,"x":0.5151041666666667,"y":0.11153358681875793},"main":{"hidden":true,"x":0.4,"y":0.39824120603015073}},"title":"Context menu","description":"Right click on any item to show its context menu. From there you can show or hide items on different views.","forecolor":"rgb(0, 0, 0)","backcolor":"rgb(255, 160, 77)"},{"viewData":{"1545790901615":{"hidden":true,"x":0.353125,"y":0.5424588086185045},"1545791235016":{"x":0.2838541666666667,"y":0.16834170854271358},"1545971755534":{"hidden":true,"x":0.6057291666666667,"y":0.6780735107731305},"main":{"hidden":true,"x":0.4244791666666667,"y":0.3907035175879397}},"title":"Collaboration","description":"All gists are stored on Firebase, so you can collaborate with your friends in real time online.\n\nTo collaborate with your teammates on a gist, simply drop them the url :)\n\nTo create a new gist, replace the \"Name\" in ?gist=\"Name\" with your own gist name.","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":false,"x":0.625,"y":0.15462610899873258},"1545791235016":{"hidden":true,"x":0.4,"y":0.39824120603015073},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":true,"x":0.36875,"y":0.5917085427135679}},"title":"Capiche?","description":"Check out the next view to continue!","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":true,"x":0.05416666666666667,"y":0.7351077313054499},"1545791235016":{"hidden":true,"x":0,"y":0},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":false,"x":0.640625,"y":0.30527638190954776}},"title":"Capice?","description":"There's more! \n\nEach screen is a view. Views allow items to be organised in different ways. \n\nTo switch a view, go to the top left dropdown menu [Tutorial v] and click the (v) to switch to another view.","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":true,"x":0.051041666666666666,"y":0.7769328263624842},"1545791235016":{"hidden":true,"x":0,"y":0},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":false,"x":0.18177083333333333,"y":0.0992462311557789}},"title":"Hey there!","description":"Welcome to Synergist! \n\nSynergist is a platform for organising notes, ideas or whatever you want!","forecolor":"rgb(0, 0, 0)","backcolor":"rgb(13, 255, 96)"},{"viewData":{"1545790901615":{"hidden":false,"x":0.50625,"y":0.16476552598225602},"1545791235016":{"hidden":true,"x":0.5322916666666667,"y":0.43844221105527637},"1545971755534":{"hidden":true,"x":0.4,"y":0.39923954372623577},"main":{"hidden":true,"x":0.08385416666666666,"y":0.6457286432160804}},"title":"Items and views","description":"Items recall their position in each view; so dragging items on one view won't affect their positions on another view. This is useful if you want to cluster items or sort them by different categories.\n\nAs of right now, items are present on all views, but I'm working on changing this :3","forecolor":"","backcolor":""},{"viewData":{"1545790901615":{"hidden":true,"x":0.4,"y":0.39923954372623577},"1545791235016":{"hidden":true,"x":0.4,"y":0.39949748743718594},"1545971755534":{"hidden":false,"x":0.328125,"y":0.2719822560202788},"main":{"hidden":true,"x":0.796875,"y":0.9786432160804021}},"title":"More features","description":"The little settings cog in the top right corner will show some extra features, like changing the colour of your items :)","forecolor":"rgb(0, 0, 0)","backcolor":"rgb(33, 255, 248)"},{"viewData":{"1545790901615":{"x":0.4,"y":0.4,"hidden":true},"1545791235016":{"x":0.4,"y":0.39949748743718594,"hidden":true},"1545971755534":{"x":0.4,"y":0.4,"hidden":true},"main":{"x":0.17291666666666666,"y":0.5489949748743719,"hidden":false}},"title":"All done?","description":"Click here to finish the tutorial!","forecolor":"","backcolor":""}],"name":"Tutorial"});
+            synergist.registerTutorial();
+        },
+        generateDoc: function(db,docName){
+            return db.collection("synergist").doc(docName);
+        },
+        blank:()=>{
+            synergist.showSplash();
+        },
+        config:{
+            apiKey: "AIzaSyA-sH4oDS4FNyaKX48PSpb1kboGxZsw9BQ",
+            authDomain: "backbits-567dd.firebaseapp.com",
+            databaseURL: "https://backbits-567dd.firebaseio.com",
+            projectId: "backbits-567dd",
+            storageBucket: "backbits-567dd.appspot.com",
+            messagingSenderId: "894862693076"
+        }
+    })
+})
